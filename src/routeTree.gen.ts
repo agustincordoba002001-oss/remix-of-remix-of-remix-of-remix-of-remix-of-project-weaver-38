@@ -10,33 +10,63 @@
 
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as IndexRouteImport } from './routes/index'
+import { Route as AnimacionesRouteImport } from './routes/animaciones'
+import { Route as SubirRouteImport } from './routes/subir'
+import { Route as ApiPublicSceneImageRouteImport } from './routes/api/public/scene-image'
 
 const IndexRoute = IndexRouteImport.update({
   id: '/',
   path: '/',
   getParentRoute: () => rootRouteImport,
 } as any)
+const AnimacionesRoute = AnimacionesRouteImport.update({
+  id: '/animaciones',
+  path: '/animaciones',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const SubirRoute = SubirRouteImport.update({
+  id: '/subir',
+  path: '/subir',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ApiPublicSceneImageRoute = ApiPublicSceneImageRouteImport.update({
+  id: '/api/public/scene-image',
+  path: '/api/public/scene-image',
+  getParentRoute: () => rootRouteImport,
+} as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
+  '/animaciones': typeof AnimacionesRoute
+  '/subir': typeof SubirRoute
+  '/api/public/scene-image': typeof ApiPublicSceneImageRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
+  '/animaciones': typeof AnimacionesRoute
+  '/subir': typeof SubirRoute
+  '/api/public/scene-image': typeof ApiPublicSceneImageRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
+  '/animaciones': typeof AnimacionesRoute
+  '/subir': typeof SubirRoute
+  '/api/public/scene-image': typeof ApiPublicSceneImageRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths: '/'
+  fullPaths: '/' | '/animaciones' | '/subir' | '/api/public/scene-image'
   fileRoutesByTo: FileRoutesByTo
-  to: '/'
-  id: '__root__' | '/'
+  to: '/' | '/animaciones' | '/subir' | '/api/public/scene-image'
+  id: '__root__' | '/' | '/animaciones' | '/subir' | '/api/public/scene-image'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
+  AnimacionesRoute: typeof AnimacionesRoute
+  SubirRoute: typeof SubirRoute
+  ApiPublicSceneImageRoute: typeof ApiPublicSceneImageRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -48,11 +78,35 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof IndexRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/animaciones': {
+      id: '/animaciones'
+      path: '/animaciones'
+      fullPath: '/animaciones'
+      preLoaderRoute: typeof AnimacionesRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/subir': {
+      id: '/subir'
+      path: '/subir'
+      fullPath: '/subir'
+      preLoaderRoute: typeof SubirRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/public/scene-image': {
+      id: '/api/public/scene-image'
+      path: '/api/public/scene-image'
+      fullPath: '/api/public/scene-image'
+      preLoaderRoute: typeof ApiPublicSceneImageRouteImport
+      parentRoute: typeof rootRouteImport
+    }
   }
 }
 
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
+  AnimacionesRoute: AnimacionesRoute,
+  SubirRoute: SubirRoute,
+  ApiPublicSceneImageRoute: ApiPublicSceneImageRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
