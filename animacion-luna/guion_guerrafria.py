@@ -616,3 +616,9 @@ GUION += [
     S("Y la próxima vez que escuches que la historia la hacen los que mandan... acordate del submarino, del calor, y del que dijo que no.", 0.9,
       None, "LA HISTORIA NO LA|HACEN LOS QUE MANDAN", "ACORDATE DEL QUE|DIJO QUE NO"),
 ]
+
+# Ajuste de duración: se recortan las frases menos necesarias para que el
+# video quede cerca de los veinte minutos sin perder ningún hecho clave.
+_CORTES = {8, 12, 19, 21, 26, 34, 39, 43, 45, 48, 51, 54, 61, 68, 72, 76, 79,
+           82, 86, 89, 93, 96, 98, 101, 104, 106, 110, 113, 117, 120, 122, 125, 129}
+GUION = [s for i, s in enumerate(GUION) if i not in _CORTES]
