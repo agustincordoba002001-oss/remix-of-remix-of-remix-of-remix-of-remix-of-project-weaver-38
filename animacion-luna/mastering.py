@@ -32,7 +32,7 @@ PERFILES = {
         "equalizer=f=5600:t=q:w=1.4:g=0.6,"      # aire discreto
         "lowpass=f=15000,"
         "deesser=i=0.34:m=0.4:f=0.30,"
-        "acompressor=threshold=-15dB:ratio=1.4:attack=32:release=280:makeup=0.8,"
+        "acompressor=threshold=-15dB:ratio=1.4:attack=32:release=280:makeup=1.0,"
         "alimiter=limit=0.78:level=disabled"
     ),
 }
