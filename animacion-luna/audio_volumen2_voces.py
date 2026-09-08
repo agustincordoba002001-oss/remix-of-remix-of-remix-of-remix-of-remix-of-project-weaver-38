@@ -5,6 +5,7 @@ build_volumen2_2min.py.
 """
 import json
 import os
+import re
 import sys
 import wave
 
@@ -22,9 +23,12 @@ os.makedirs('/tmp/voces_seg', exist_ok=True)
 # Guion original del video (18 frases). D = narrador Dark, X = cita en Dark.
 # La puntuación y algunas grafías están adaptadas únicamente para guiar la
 # pronunciación del sintetizador; el sentido y el texto mostrado no cambian.
-# REGLA: todo nombre en inglés se escribe tal como suena en español
+# REGLA 1: todo nombre en inglés se escribe tal como suena en español
 # (Kennedy -> "Quénedi", Shepard -> "Shéperd", White -> "Uáit", Chaffee ->
-# "Cháfi", Grissom -> "Grísom", NASA -> "Nása", Apollo -> "Apolo").
+# "Cháfi", Grissom -> "Grísom", NASA -> "Nása", Apollo -> "Apolo",
+# Nixon -> "Nícson", Washington -> "Washintong", Spider-Man -> "Espaiderman").
+# REGLA 2: las fechas y los años van SIEMPRE en cifras ("25 de mayo de 1961",
+# "Apolo 11"), nunca escritos en letras: así se pronuncian de corrido.
 segs = [
  ("D", "Salí una noche al patio... y mirá para arriba. Ahí está: la Luna.", 0.45),
  ("D", "La misma que vieron los egipcios, los romanos... y tu bisabuelo. Blanca. Quieta. Inalcanzable.", 0.50),
