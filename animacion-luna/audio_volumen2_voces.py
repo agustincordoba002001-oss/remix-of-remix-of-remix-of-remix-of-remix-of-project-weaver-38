@@ -5,6 +5,7 @@ build_volumen2_2min.py.
 """
 import json
 import os
+import re
 import sys
 import wave
 
@@ -22,14 +23,17 @@ os.makedirs('/tmp/voces_seg', exist_ok=True)
 # Guion original del video (18 frases). D = narrador Dark, X = cita en Dark.
 # La puntuación y algunas grafías están adaptadas únicamente para guiar la
 # pronunciación del sintetizador; el sentido y el texto mostrado no cambian.
-# REGLA: todo nombre en inglés se escribe tal como suena en español
+# REGLA 1: todo nombre en inglés se escribe tal como suena en español
 # (Kennedy -> "Quénedi", Shepard -> "Shéperd", White -> "Uáit", Chaffee ->
-# "Cháfi", Grissom -> "Grísom", NASA -> "Nása", Apollo -> "Apolo").
+# "Cháfi", Grissom -> "Grísom", NASA -> "Nása", Apollo -> "Apolo",
+# Nixon -> "Nícson", Washington -> "Washintong", Spider-Man -> "Espaiderman").
+# REGLA 2: las fechas y los años van SIEMPRE en cifras ("25 de mayo de 1961",
+# "Apolo 11"), nunca escritos en letras: así se pronuncian de corrido.
 segs = [
  ("D", "Salí una noche al patio... y mirá para arriba. Ahí está: la Luna.", 0.45),
  ("D", "La misma que vieron los egipcios, los romanos... y tu bisabuelo. Blanca. Quieta. Inalcanzable.", 0.50),
  ("D", "Y en apenas ocho años, un grupo de ingenieros, con reglas de cálculo y café frío, la pisó.", 0.55),
- ("D", "Todo arranca el veinticinco de mayo de mil novecientos sesenta y uno, cuando Quénedi se para frente al Congreso y promete algo enorme:", 0.40),
+ ("D", "Todo arranca el 25 de mayo de 1961, cuando Quénedi se para frente al Congreso y promete algo enorme:", 0.40),
  ("X", "Esta nación debe poner un hombre en la Luna antes del fin de la década, y devolverlo sano y salvo.", 0.55),
  ("D", "La sala aplaude. En la Nása... varios ingenieros se ponen pálidos.", 0.45),
  ("D", "Porque Estados Unidos tenía apenas quince minutos de experiencia en vuelo tripulado. Quince minutos: un salto corto de Álan Shéperd.", 0.45),
@@ -39,7 +43,7 @@ segs = [
  ("D", "Ellos eran Vércheil Gas Grísom: veterano, y el segundo estadounidense en el espacio.", 0.35),
  ("D", "Ed Uáit: el primer norteamericano en caminar fuera de la nave.", 0.35),
  ("D", "Y Róyer Cháfi: joven, ingeniero, a punto de volar por primera vez.", 0.50),
- ("D", "Es el veintisiete de enero de mil novecientos sesenta y siete, y ni siquiera era un lanzamiento: era un ensayo en tierra, con la cápsula del Apolo uno cerrada, y llena de oxígeno puro a presión.", 0.45),
+ ("D", "Es el 27 de enero de 1967, y ni siquiera era un lanzamiento: era un ensayo en tierra, con la cápsula del Apolo 1 cerrada, y llena de oxígeno puro a presión.", 0.45),
  ("D", "Un cable pelado hizo una chispa. En oxígeno puro, todo lo que toca el fuego se convierte en combustible.", 0.45),
  ("D", "La escotilla se abría hacia adentro, y tardaba minutos en ceder. Los tres murieron en menos de treinta segundos.", 0.65),
  ("X", "Este es un negocio riesgoso.", 0.45),
@@ -92,8 +96,10 @@ def ritmo(txt: str, gap: float) -> float:
     if len(txt) > 140:            # frases largas: no arrastrarlas
         v -= 0.025
     # fechas y cifras: se dicen de corrido, sin trabarse
-    if 'mil novecientos' in t or 'veinticinco' in t or 'veintisiete' in t:
-        v -= 0.07
+    # Las fechas se escriben en cifras (25 de mayo de 1961) porque así el
+    # generador las dice de corrido y natural, sin trabarse.
+    if re.search(r'\d', t):
+        v -= 0.04
     return round(min(1.07, max(0.94, v)), 3)
 
 
