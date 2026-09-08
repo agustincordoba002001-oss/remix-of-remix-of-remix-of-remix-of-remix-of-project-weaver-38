@@ -22,7 +22,7 @@ const browser = await openBrowser("chrome", {
 
 const composition = await selectComposition({
   serveUrl: bundled,
-  id: "main",
+  id: process.env.COMP ?? "main",
   puppeteerInstance: browser,
 });
 
