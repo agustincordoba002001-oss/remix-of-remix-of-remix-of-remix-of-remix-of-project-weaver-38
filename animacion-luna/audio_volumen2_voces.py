@@ -1,4 +1,4 @@
-"""Narración oficial del Volumen 2 con las voces fijas Elena argentina (narradora) y Dark (citas).
+"""Narración oficial del Volumen 2 con las voces fijas Dark (narrador único).
 
 Genera /tmp/luna/v2_2min.wav y /tmp/luna/marks_v2_2min.json, que consume
 build_volumen2_2min.py.
@@ -19,7 +19,7 @@ TMP = '/tmp/luna'
 os.makedirs(TMP, exist_ok=True)
 os.makedirs('/tmp/voces_seg', exist_ok=True)
 
-# Guion original del video (18 frases). D = narradora Elena, X = voz Dark.
+# Guion original del video (18 frases). D = narrador Dark, X = voz Dark.
 segs = [
  ("D", "Salí una noche al patio y mirá para arriba. Ahí está: la Luna.", 0.45),
  ("D", "La misma que vieron los egipcios, los romanos y tu bisabuelo. Blanca, quieta, inalcanzable.", 0.50),
@@ -100,16 +100,13 @@ def nivelar(a, objetivo=0.10, techo=0.80):
 
 
 for i, (who, txt, gap) in enumerate(segs):
-    voz = 'elena' if who == 'D' else 'dark'
+    voz = 'dark'  # narración completa con una sola voz
     # Expresividad frase a frase, acorde al contenido de cada línea.
-    if voz == 'elena':
-        ajustes = {
-            'length_scale': ritmo(txt, gap),
-            'noise_scale': round(0.56 + (i % 3) * 0.015, 3),
-            'noise_w': round(0.68 + (i % 2) * 0.03, 3),
-        }
-    else:
-        ajustes = None
+    ajustes = {
+        'length_scale': ritmo(txt, gap),
+        'noise_scale': round(0.56 + (i % 3) * 0.015, 3),
+        'noise_w': round(0.68 + (i % 2) * 0.03, 3),
+    }
     raw = f'/tmp/voces_seg/{i:02d}_{voz}.wav'
     dst = f'/tmp/voces_seg/{i:02d}_{voz}_master.wav'
     if not os.path.exists(raw):
