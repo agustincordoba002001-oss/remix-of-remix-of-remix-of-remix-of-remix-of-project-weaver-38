@@ -8,10 +8,10 @@ import subprocess
 
 SR_MASTER = 48000
 
-# Ajustes por voz: Lilith (narradora) necesita más cuerpo y aire controlado;
+# Ajustes por voz: Elena (narradora) necesita más cuerpo y aire controlado;
 # Dark (citas) necesita claridad en medios sin engordar los graves.
 PERFILES = {
-    "lilith": (
+    "elena": (
         "highpass=f=90,"
         "anlmdn=s=0.0006:p=0.004:r=0.008,"
         "equalizer=f=180:t=q:w=1.0:g=2.0,"       # calidez del pecho
