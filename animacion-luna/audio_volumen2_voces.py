@@ -19,21 +19,23 @@ TMP = '/tmp/luna'
 os.makedirs(TMP, exist_ok=True)
 os.makedirs('/tmp/voces_seg', exist_ok=True)
 
-# Guion original del video (18 frases). D = narrador Dark, X = voz Dark.
+# Guion original del video (18 frases). D = narrador Dark, X = cita en Dark.
+# La puntuación y algunas grafías están adaptadas únicamente para guiar la
+# pronunciación del sintetizador; el sentido y el texto mostrado no cambian.
 segs = [
- ("D", "Salí una noche al patio y mirá para arriba. Ahí está: la Luna.", 0.45),
- ("D", "La misma que vieron los egipcios, los romanos y tu bisabuelo. Blanca, quieta, inalcanzable.", 0.50),
- ("D", "Y en apenas ocho años, un grupo de ingenieros con reglas de cálculo y café frío la pisó.", 0.55),
- ("D", "Todo arranca el veinticinco de mayo de mil novecientos sesenta y uno. Kennedy se para frente al Congreso y promete algo enorme:", 0.40),
+ ("D", "Salí una noche al patio... y mirá para arriba. Ahí está: la Luna.", 0.45),
+ ("D", "La misma que vieron los egipcios, los romanos... y tu bisabuelo. Blanca. Quieta. Inalcanzable.", 0.50),
+ ("D", "Y en apenas ocho años, un grupo de ingenieros, con reglas de cálculo y café frío, la pisó.", 0.55),
+ ("D", "Todo arranca el veinticinco de mayo de mil novecientos sesenta y uno. Kénedi se para frente al Congreso... y promete algo enorme:", 0.40),
  ("X", "Esta nación debe poner un hombre en la Luna antes del fin de la década, y devolverlo sano y salvo.", 0.55),
- ("D", "La sala aplaude. En la NASA, varios ingenieros se ponen pálidos.", 0.45),
- ("D", "Porque Estados Unidos tenía quince minutos de experiencia en vuelo tripulado. Quince minutos, un salto corto de Alan Shepard.", 0.45),
- ("D", "Los soviéticos ya le habían dado la vuelta completa al planeta con Yuri Gagarin. Iban ganando, y por mucho.", 0.45),
+ ("D", "La sala aplaude. En la Nása... varios ingenieros se ponen pálidos.", 0.45),
+ ("D", "Porque Estados Unidos tenía apenas quince minutos de experiencia en vuelo tripulado. Quince minutos: un salto corto de Álan Shépard.", 0.45),
+ ("D", "Los soviéticos ya le habían dado la vuelta completa al planeta con Iúri Gagarin. Iban ganando... y por mucho.", 0.45),
  ("D", "La carrera espacial no la movía la curiosidad. La movía el miedo: el que llegara primero mandaba en el cielo.", 0.60),
  ("D", "Pero casi nadie cuenta cómo empezó de verdad ese camino. Empezó con tres muertos.", 0.60),
- ("D", "Ellos eran Virgil Gus Grissom, veterano, el segundo estadounidense en el espacio.", 0.35),
- ("D", "Ed White, el primer norteamericano en caminar fuera de la nave.", 0.35),
- ("D", "Y Roger Chaffee, joven, ingeniero, a punto de volar por primera vez.", 0.50),
+ ("D", "Ellos eran Vérchill Gus Grísom: veterano, y el segundo estadounidense en el espacio.", 0.35),
+ ("D", "Ed Uáit: el primer norteamericano en caminar fuera de la nave.", 0.35),
+ ("D", "Y Róyer Cháfi: joven, ingeniero, a punto de volar por primera vez.", 0.50),
  ("D", "Veintisiete de enero de mil novecientos sesenta y siete. Ni siquiera era un lanzamiento: era un ensayo en tierra, con la cápsula del Apolo uno cerrada y llena de oxígeno puro a presión.", 0.45),
  ("D", "Un cable pelado hizo una chispa. En oxígeno puro, todo lo que toca el fuego se convierte en combustible.", 0.45),
  ("D", "La escotilla se abría hacia adentro y tardaba minutos en ceder. Los tres murieron en menos de treinta segundos.", 0.65),
@@ -71,25 +73,24 @@ marks = []
 tcur = 0.35
 DRAMATICAS = ('muertos', 'murieron', 'miedo', 'tragedia', 'incendio',
               'pálidos', 'riesgoso', 'inalcanzable')
-AGILES = ('porque', 'ya le habían', 'la sala', 'todo arranca')
+AGILES = ('porque', 'los soviéticos', 'la sala', 'todo arranca')
 
 
 def ritmo(txt: str, gap: float) -> float:
     """Velocidad acorde a lo que se narra: los datos van ágiles y las frases
     con carga emocional se dicen más despacio."""
     t = txt.lower()
-    v = 1.02
+    v = 0.99
     if any(k in t for k in DRAMATICAS):
-        v += 0.09
+        v += 0.055
     if any(t.startswith(k) for k in AGILES):
-        v -= 0.03
+        v -= 0.035
     if len(txt) > 140:            # frases largas: no arrastrarlas
-        v -= 0.03
-    v += min(gap, 0.65) * 0.08    # antes de una pausa larga, cerrar más calmo
-    return round(min(1.14, max(0.96, v)), 3)
+        v -= 0.025
+    return round(min(1.07, max(0.94, v)), 3)
 
 
-def nivelar(a, objetivo=0.10, techo=0.80):
+def nivelar(a, objetivo=0.073, techo=0.68):
     """Deja todas las frases al mismo volumen percibido (RMS) sin saturar."""
     activo = a[np.abs(a) > 0.01]
     rms = float(np.sqrt(np.mean(activo ** 2))) if len(activo) else 1e-6
@@ -104,17 +105,17 @@ for i, (who, txt, gap) in enumerate(segs):
     # Expresividad frase a frase, acorde al contenido de cada línea.
     ajustes = {
         'length_scale': ritmo(txt, gap),
-        'noise_scale': round(0.56 + (i % 3) * 0.015, 3),
-        'noise_w': round(0.68 + (i % 2) * 0.03, 3),
+        'noise_scale': round(0.48 + (i % 3) * 0.01, 3),
+        'noise_w': round(0.60 + (i % 2) * 0.02, 3),
     }
-    raw = f'/tmp/voces_seg/{i:02d}_{voz}.wav'
-    dst = f'/tmp/voces_seg/{i:02d}_{voz}_master.wav'
+    raw = f'/tmp/voces_seg/v3_{i:02d}_{voz}.wav'
+    dst = f'/tmp/voces_seg/v3_{i:02d}_{voz}_master.wav'
     if not os.path.exists(raw):
         sintetizar(txt, voz, raw, ajustes=ajustes)
     if not os.path.exists(dst):
         masterizar(raw, dst, voz)
     a = recortar_silencio(leer_wav(dst))
-    a = nivelar(a, 0.105 if who == 'D' else 0.100)
+    a = nivelar(a, 0.073 if who == 'D' else 0.070)
     # pequeño respiro al final de cada frase para que no suene atropellada
     fade = int(0.05 * SR)
     a[:fade] *= np.linspace(0, 1, fade)
@@ -157,7 +158,7 @@ for k in range(int(T / 3.5)):
     mus[s0:s0 + d] += np.sin(2 * np.pi * f * tt) * np.exp(-tt / 0.6) * 0.018
 k = 20
 mus = np.convolve(mus, np.ones(k, np.float32) / k, mode='same')
-mus *= 0.16
+mus *= 0.12
 fade = int(3.5 * SR)
 mus[:fade] *= np.linspace(0, 1, fade)
 mus[-fade:] *= np.linspace(1, 0, fade)
@@ -176,8 +177,8 @@ mus *= duck
 out = mus.copy()
 out[:len(voz)] += voz
 pico = float(np.abs(out).max())
-if pico > 0.89:
-    out *= 0.89 / pico
+if pico > 0.76:
+    out *= 0.76 / pico
 out = np.clip(out, -1, 1)
 with wave.open(f'{TMP}/v2_2min.wav', 'wb') as w:
     w.setnchannels(1)
