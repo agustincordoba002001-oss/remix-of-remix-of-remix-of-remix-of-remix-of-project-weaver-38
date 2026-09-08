@@ -1,13 +1,13 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useServerFn } from "@tanstack/react-start";
 import { useEffect, useMemo, useRef, useState } from "react";
-import { Check, Loader2, Play, RotateCcw, Volume2 } from "lucide-react";
+import { Check, Film, Loader2, Play, RotateCcw, Volume2 } from "lucide-react";
 import { toast } from "sonner";
 
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Toaster } from "@/components/ui/sonner";
-import { generarFrase } from "@/lib/narracion.functions";
+import { generarFrase, pedirVideoFinal } from "@/lib/narracion.functions";
 import marcas from "@/lib/marcas.json";
 import videoAsset from "@/assets/alunizaje.mp4.asset.json";
 
@@ -33,7 +33,7 @@ export const Route = createFileRoute("/")({
 });
 
 type Marca = { t0: number; t1: number; txt: string };
-type Correccion = { texto: string; ritmo: number; claridad: number };
+type Correccion = { texto: string };
 
 const LS = "correcciones-alunizaje";
 
@@ -51,12 +51,12 @@ function EditorPage() {
   const [activa, setActiva] = useState(0);
   const [t, setT] = useState(0);
   const [texto, setTexto] = useState(lista[0]?.txt ?? "");
-  const [ritmo, setRitmo] = useState(1.06);
-  const [claridad, setClaridad] = useState(0.58);
+  const [enviando, setEnviando] = useState(false);
   const [prueba, setPrueba] = useState<string | null>(null);
   const [cargando, setCargando] = useState(false);
   const [aprobadas, setAprobadas] = useState<Record<number, Correccion>>({});
   const sintetizar = useServerFn(generarFrase);
+  const enviarPedido = useServerFn(pedirVideoFinal);
 
   useEffect(() => {
     try {
@@ -77,8 +77,6 @@ function EditorPage() {
     setPrueba(null);
     const guardada = aprobadas[i];
     setTexto(guardada?.texto ?? lista[i]?.txt ?? "");
-    setRitmo(guardada?.ritmo ?? 1.06);
-    setClaridad(guardada?.claridad ?? 0.58);
     const v = videoRef.current;
     if (v) {
       v.currentTime = Math.max(0, (lista[i]?.t0 ?? 0) - 0.2);
@@ -91,7 +89,7 @@ function EditorPage() {
     setCargando(true);
     setPrueba(null);
     try {
-      const r = await sintetizar({ data: { texto: texto.trim(), ritmo, claridad } });
+      const r = await sintetizar({ data: { texto: texto.trim() } });
       setPrueba(r.audio);
       toast.success("Voz generada: escuchala antes de aprobar");
     } catch {
@@ -102,7 +100,7 @@ function EditorPage() {
   }
 
   function aprobar() {
-    guardar({ ...aprobadas, [activa]: { texto: texto.trim(), ritmo, claridad } });
+    guardar({ ...aprobadas, [activa]: { texto: texto.trim() } });
     toast.success(`Frase ${activa + 1} aprobada`);
   }
 
@@ -121,6 +119,28 @@ function EditorPage() {
   }, [t, lista]);
 
   const totalAprobadas = Object.keys(aprobadas).length;
+
+  async function empezar() {
+    if (!totalAprobadas) return;
+    setEnviando(true);
+    try {
+      await enviarPedido({
+        data: {
+          correcciones: Object.entries(aprobadas).map(([i, c]) => ({
+            indice: Number(i),
+            texto: c.texto,
+          })),
+        },
+      });
+      toast.success(
+        `Pedido enviado con ${totalAprobadas} frase(s). Avisame en el chat y te devuelvo el video final.`,
+      );
+    } catch {
+      toast.error("No se pudo enviar el pedido. Probá de nuevo.");
+    } finally {
+      setEnviando(false);
+    }
+  }
 
   return (
     <main className="min-h-screen bg-background">
@@ -170,32 +190,11 @@ function EditorPage() {
               Washintong. Las fechas y los años, en cifras.
             </p>
 
-            <div className="mt-4 grid gap-4 sm:grid-cols-2">
-              <label className="text-xs uppercase tracking-[0.2em] text-muted-foreground">
-                Velocidad · {ritmo.toFixed(2)}
-                <input
-                  type="range"
-                  min={0.94}
-                  max={1.18}
-                  step={0.01}
-                  value={ritmo}
-                  onChange={(e) => setRitmo(Number(e.target.value))}
-                  className="mt-2 w-full accent-primary"
-                />
-              </label>
-              <label className="text-xs uppercase tracking-[0.2em] text-muted-foreground">
-                Claridad · {claridad.toFixed(2)}
-                <input
-                  type="range"
-                  min={0.45}
-                  max={0.75}
-                  step={0.01}
-                  value={claridad}
-                  onChange={(e) => setClaridad(Number(e.target.value))}
-                  className="mt-2 w-full accent-primary"
-                />
-              </label>
-            </div>
+            <p className="mt-2 text-xs text-muted-foreground">
+              La voz sale con la misma entonación, velocidad y calidad que el video: no
+              hay nada que ajustar.
+            </p>
+
 
             <div className="mt-5 flex flex-wrap gap-2">
               <Button onClick={() => void generar()} disabled={cargando} className="h-11">
@@ -222,6 +221,26 @@ function EditorPage() {
               </Button>
             </div>
             {prueba && <audio ref={audioRef} src={prueba} controls className="mt-4 w-full" />}
+
+            <div className="mt-6 border-t border-border/70 pt-5">
+              <p className="text-sm text-muted-foreground">
+                {totalAprobadas} frase(s) aprobada(s). El video final mantiene el mismo
+                ritmo y las mismas transiciones: solo se alarga lo justo si la frase dura
+                un poco más.
+              </p>
+              <Button
+                className="mt-3 h-11"
+                disabled={!totalAprobadas || enviando}
+                onClick={() => void empezar()}
+              >
+                {enviando ? (
+                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                ) : (
+                  <Film className="mr-2 h-4 w-4" />
+                )}
+                Empezar a generar el video final
+              </Button>
+            </div>
           </Card>
         </div>
 
