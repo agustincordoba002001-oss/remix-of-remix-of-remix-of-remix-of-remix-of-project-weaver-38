@@ -76,12 +76,12 @@ function EditorPage() {
     setActiva(i);
     setPrueba(null);
     const guardada = aprobadas[i];
-    setTexto(guardada?.texto ?? lista[i].txt);
+    setTexto(guardada?.texto ?? lista[i]?.txt ?? "");
     setRitmo(guardada?.ritmo ?? 1.06);
     setClaridad(guardada?.claridad ?? 0.58);
     const v = videoRef.current;
     if (v) {
-      v.currentTime = Math.max(0, lista[i].t0 - 0.2);
+      v.currentTime = Math.max(0, (lista[i]?.t0 ?? 0) - 0.2);
       void v.play();
     }
   }
@@ -110,13 +110,13 @@ function EditorPage() {
     const next = { ...aprobadas };
     delete next[activa];
     guardar(next);
-    setTexto(lista[activa].txt);
+    setTexto(lista[activa]?.txt ?? "");
     setPrueba(null);
   }
 
   const enCurso = useMemo(() => {
     let idx = 0;
-    for (let i = 0; i < lista.length; i++) if (t >= lista[i].t0) idx = i;
+    for (let i = 0; i < lista.length; i++) if (t >= (lista[i]?.t0 ?? 0)) idx = i;
     return idx;
   }, [t, lista]);
 
@@ -157,7 +157,7 @@ function EditorPage() {
 
           <Card className="border-border/70 bg-card/70 p-5">
             <p className="text-xs uppercase tracking-[0.2em] text-muted-foreground">
-              Frase {activa + 1} · {mmss(lista[activa].t0)}
+              Frase {activa + 1} · {mmss(lista[activa]?.t0 ?? 0)}
             </p>
             <textarea
               value={texto}
