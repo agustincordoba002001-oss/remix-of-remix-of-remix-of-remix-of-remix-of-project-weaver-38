@@ -119,6 +119,28 @@ function EditorPage() {
 
   const totalAprobadas = Object.keys(aprobadas).length;
 
+  async function empezar() {
+    if (!totalAprobadas) return;
+    setEnviando(true);
+    try {
+      await enviarPedido({
+        data: {
+          correcciones: Object.entries(aprobadas).map(([i, c]) => ({
+            indice: Number(i),
+            texto: c.texto,
+          })),
+        },
+      });
+      toast.success(
+        `Pedido enviado con ${totalAprobadas} frase(s). Avisame en el chat y te devuelvo el video final.`,
+      );
+    } catch {
+      toast.error("No se pudo enviar el pedido. Probá de nuevo.");
+    } finally {
+      setEnviando(false);
+    }
+  }
+
   return (
     <main className="min-h-screen bg-background">
       <Toaster />
@@ -198,6 +220,26 @@ function EditorPage() {
               </Button>
             </div>
             {prueba && <audio ref={audioRef} src={prueba} controls className="mt-4 w-full" />}
+
+            <div className="mt-6 border-t border-border/70 pt-5">
+              <p className="text-sm text-muted-foreground">
+                {totalAprobadas} frase(s) aprobada(s). El video final mantiene el mismo
+                ritmo y las mismas transiciones: solo se alarga lo justo si la frase dura
+                un poco más.
+              </p>
+              <Button
+                className="mt-3 h-11"
+                disabled={!totalAprobadas || enviando}
+                onClick={() => void empezar()}
+              >
+                {enviando ? (
+                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                ) : (
+                  <Film className="mr-2 h-4 w-4" />
+                )}
+                Empezar a generar el video final
+              </Button>
+            </div>
           </Card>
         </div>
 
