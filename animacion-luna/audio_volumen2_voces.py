@@ -1,4 +1,4 @@
-"""Narración oficial del Volumen 2 con las voces fijas Lilith (narradora) y Dark (citas).
+"""Narración oficial del Volumen 2 con las voces fijas Elena argentina (narradora) y Dark (citas).
 
 Genera /tmp/luna/v2_2min.wav y /tmp/luna/marks_v2_2min.json, que consume
 build_volumen2_2min.py.
@@ -19,7 +19,7 @@ TMP = '/tmp/luna'
 os.makedirs(TMP, exist_ok=True)
 os.makedirs('/tmp/voces_seg', exist_ok=True)
 
-# Guion original del video (18 frases). D = narradora Lilith, X = voz Dark.
+# Guion original del video (18 frases). D = narradora Elena, X = voz Dark.
 segs = [
  ("D", "Salí una noche al patio y mirá para arriba. Ahí está: la Luna.", 0.45),
  ("D", "La misma que vieron los egipcios, los romanos y tu bisabuelo. Blanca, quieta, inalcanzable.", 0.50),
@@ -70,7 +70,7 @@ parts = [np.zeros(int(0.35 * SR), np.float32)]
 marks = []
 tcur = 0.35
 for i, (who, txt, gap) in enumerate(segs):
-    voz = 'lilith' if who == 'D' else 'dark'
+    voz = 'elena' if who == 'D' else 'dark'
     raw = f'/tmp/voces_seg/{i:02d}_{voz}.wav'
     dst = f'/tmp/voces_seg/{i:02d}_{voz}_master.wav'
     if not os.path.exists(raw):

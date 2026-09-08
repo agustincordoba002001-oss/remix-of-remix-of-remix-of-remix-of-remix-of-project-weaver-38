@@ -1,4 +1,4 @@
-"""Voces oficiales del proyecto: Lilith (narradora) y Dark (citas).
+"""Voces oficiales del proyecto: Elena argentina (narradora) y Dark (citas).
 
 Se sintetizan con el generador Piper en español de HirCoir. Los ajustes
 de expresividad (ritmo, variación y pausas) están calibrados para que la
@@ -12,10 +12,11 @@ ENDPOINT = "https://hircoir-piper-tts-spanish.hf.space/convert"
 
 # Voces fijas del proyecto.
 VOCES = {
-    # Narradora principal: cálida, ritmo pausado y algo de variación melódica.
-    "lilith": {
-        "modelPath": "models/es_MX-lilith.onnx",
-        "settings": {"speaker": 0, "noise_scale": 0.72, "length_scale": 1.08, "noise_w": 0.85},
+    # Narradora principal: Elena argentina, calibrada para expresarse como
+    # Lilith (más humana, con variación melódica y ritmo natural).
+    "elena": {
+        "modelPath": "models/es_AR-microsoft-elena.onnx",
+        "settings": {"speaker": 0, "noise_scale": 0.78, "length_scale": 1.10, "noise_w": 0.90},
     },
     # Voz de las citas y frases graves: más lenta y sobria.
     "dark": {
