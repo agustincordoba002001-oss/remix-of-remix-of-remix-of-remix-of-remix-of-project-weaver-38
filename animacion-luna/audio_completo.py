@@ -18,8 +18,8 @@ from mastering import masterizar  # noqa: E402
 from guion_completo import GUION  # noqa: E402
 
 SR = 48000
-TMP = '/tmp/luna'
-SEG = '/tmp/voces_full'
+TMP = '/mnt/documents/luna'
+SEG = '/mnt/documents/voces_full'
 os.makedirs(TMP, exist_ok=True)
 os.makedirs(SEG, exist_ok=True)
 

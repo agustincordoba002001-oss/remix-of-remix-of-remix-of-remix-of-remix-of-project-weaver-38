@@ -14,8 +14,8 @@ import subprocess
 from PIL import Image, ImageChops, ImageDraw, ImageFont
 
 W, H, FPS = 1280, 720, 30
-AUDIO = '/tmp/luna/full.wav'
-MARKS = json.load(open('/tmp/luna/marks_full.json'))
+AUDIO = '/mnt/documents/luna/full.wav'
+MARKS = json.load(open('/mnt/documents/luna/marks_full.json'))
 DUR = MARKS[-1]['t1'] + 2.0
 
 START = float(os.environ.get('START', 0))
@@ -89,18 +89,29 @@ ALIAS = {'dinero': 'equipo', 'control': 'kranz', 'combustible': 'alarma',
 _IMG = {}
 
 
+def clave(i, s):
+    """Dibujo propio de la escena i si existe; nunca se repite un dibujo."""
+    n = f'n{i:03d}'
+    if os.path.exists(REF + n + '.png'):
+        return n
+    return s['img']
+
+
 def img(key, maxw, maxh):
-    key = ALIAS.get(key, key)
+    if not (key.startswith('n') and key[1:].isdigit()):
+        key = ALIAS.get(key, key)
     ck = (key, maxw, maxh)
     if ck in _IMG:
         return _IMG[ck]
-    im = Image.open(REF + FILES[key]).convert('RGBA')
+    nombre = key + '.png' if key.startswith('n') and key[1:].isdigit() else FILES[key]
+    im = Image.open(REF + nombre).convert('RGBA')
     bb = im.getbbox()
     if bb:
         im = im.crop(bb)
     im.thumbnail((maxw, maxh), Image.Resampling.LANCZOS)
     _IMG[ck] = im
     return im
+
 
 
 def text_layer(lines, colors, maxw, sizes):
@@ -134,9 +145,11 @@ def build_screens():
         t0 = max(0.0, m['t0'] - 0.3)
         end = max(0.0, MARKS[i + 1]['t0'] - 0.3) if i + 1 < len(MARKS) else DUR
         els = []
-        if s['img']:
+        k = clave(i, s)
+        if k:
             zona_x, zona_w = 690, 550
-            im = img(s['img'], 590, 500)
+            im = img(k, 590, 500)
+
             els.append(dict(im=im, x=60 + (600 - im.width) // 2,
                             y=max(120, (H - im.height) // 2),
                             rows=max(4, min(9, im.height // 62))))
