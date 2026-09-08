@@ -142,37 +142,75 @@ voz = np.concatenate(parts)
 T = len(voz) / SR + 1.2
 n = int(T * SR)
 
-# Música espacial: drone grave, pad suspendido y destellos lejanos.
+# Música dinámica por tramos: cambia siguiendo el contexto del relato
+# (curiosidad -> la carrera -> tensión -> el golpe -> esperanza final).
+# Tono luminoso, nunca triste, y siempre por debajo de la narración.
 mus = np.zeros(n, np.float32)
-tt_all = np.arange(n) / SR
-mus += np.sin(2 * np.pi * 55.0 * tt_all) * 0.10 + np.sin(2 * np.pi * 55.4 * tt_all) * 0.08
-mus += np.sin(2 * np.pi * 110.0 * tt_all) * 0.05 * (0.6 + 0.4 * np.sin(2 * np.pi * 0.05 * tt_all))
-chords = [[220.00, 293.66, 329.63], [196.00, 261.63, 329.63],
-          [174.61, 261.63, 349.23], [164.81, 246.94, 329.63]]
-bar = 12.0
-for i in range(int(T / bar) + 1):
-    ch = chords[i % 4]
-    s0 = int(i * bar * SR)
-    if s0 >= n:
+rng = np.random.default_rng(11)
+
+# (proporción del total, acordes, pulso por segundo, brillo, nivel)
+TRAMOS = [
+    (0.13, [[261.63, 329.63, 392.00], [220.00, 277.18, 329.63]], 0.0, 0.55, 0.85),
+    (0.26, [[196.00, 246.94, 293.66], [261.63, 329.63, 392.00],
+            [174.61, 220.00, 261.63], [196.00, 246.94, 293.66]], 1.6, 0.85, 1.0),
+    (0.22, [[220.00, 261.63, 329.63], [246.94, 293.66, 369.99]], 1.2, 0.7, 0.95),
+    (0.22, [[174.61, 207.65, 261.63], [196.00, 233.08, 293.66]], 0.0, 0.45, 0.8),
+    (0.17, [[261.63, 329.63, 392.00], [293.66, 369.99, 440.00],
+            [349.23, 440.00, 523.25]], 2.0, 1.0, 1.0),
+]
+
+pos = 0
+for prop, chords, pulso, brillo, nivel in TRAMOS:
+    d = min(int(prop * T * SR), n - pos)
+    if d <= 0:
         break
-    d = min(int(bar * SR), n - s0)
     tt = np.arange(d) / SR
-    env = np.minimum(1, tt / 4.0) * np.minimum(1, (bar - tt) / 4.0)
-    for f in ch:
-        mus[s0:s0 + d] += np.sin(2 * np.pi * f * tt + 0.6 * np.sin(2 * np.pi * 0.12 * tt)) * env * 0.045
-rng = np.random.default_rng(7)
-for k in range(int(T / 3.5)):
-    s0 = int((k * 3.5 + rng.uniform(0, 2.0)) * SR)
-    if s0 >= n:
-        break
-    d = min(int(2.2 * SR), n - s0)
-    tt = np.arange(d) / SR
-    f = float(rng.choice([880.0, 1046.5, 1318.5, 1567.98]))
-    mus[s0:s0 + d] += np.sin(2 * np.pi * f * tt) * np.exp(-tt / 0.6) * 0.018
-k = 20
+    seg = np.zeros(d, np.float32)
+    seg += np.sin(2 * np.pi * (chords[0][0] / 2) * tt) * 0.075
+    bar = 6.0
+    for i in range(int(d / SR / bar) + 1):
+        ch = chords[i % len(chords)]
+        s0 = int(i * bar * SR)
+        if s0 >= d:
+            break
+        dd = min(int(bar * SR), d - s0)
+        t2 = np.arange(dd) / SR
+        env = np.minimum(1, t2 / 1.6) * np.minimum(1, (bar - t2) / 1.8)
+        for f in ch:
+            seg[s0:s0 + dd] += np.sin(2 * np.pi * f * t2) * env * 0.038
+            seg[s0:s0 + dd] += np.sin(2 * np.pi * f * 2 * t2) * env * 0.010 * brillo
+    if pulso > 0:
+        paso = 1.0 / pulso
+        k = 0
+        while k * paso < d / SR:
+            s0 = int(k * paso * SR)
+            dd = min(int(0.7 * SR), d - s0)
+            if dd <= 0:
+                break
+            t2 = np.arange(dd) / SR
+            ch = chords[int(k * paso / bar) % len(chords)]
+            f = ch[k % len(ch)] * 2
+            seg[s0:s0 + dd] += np.sin(2 * np.pi * f * t2) * np.exp(-t2 / 0.22) * 0.030 * brillo
+            k += 1
+    for k in range(int(d / SR / 4.0)):
+        s0 = int((k * 4.0 + rng.uniform(0, 2.0)) * SR)
+        dd = min(int(1.8 * SR), d - s0)
+        if dd <= 0:
+            break
+        t2 = np.arange(dd) / SR
+        f = float(rng.choice([1046.5, 1318.5, 1567.98]))
+        seg[s0:s0 + dd] += np.sin(2 * np.pi * f * t2) * np.exp(-t2 / 0.5) * 0.014 * brillo
+    cf = int(1.6 * SR)
+    if d > 2 * cf:
+        seg[:cf] *= np.linspace(0, 1, cf)
+        seg[-cf:] *= np.linspace(1, 0, cf)
+    mus[pos:pos + d] += seg * nivel
+    pos += max(1, d - min(int(0.8 * SR), d // 4))
+
+k = 16
 mus = np.convolve(mus, np.ones(k, np.float32) / k, mode='same')
-mus *= 0.12
-fade = int(3.5 * SR)
+mus *= 0.13
+fade = int(2.5 * SR)
 mus[:fade] *= np.linspace(0, 1, fade)
 mus[-fade:] *= np.linspace(1, 0, fade)
 
