@@ -10,80 +10,33 @@
 
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as IndexRouteImport } from './routes/index'
-import { Route as AnimacionesRouteImport } from './routes/animaciones'
-import { Route as EditarRouteImport } from './routes/editar'
-import { Route as SubirRouteImport } from './routes/subir'
-import { Route as ApiPublicSceneImageRouteImport } from './routes/api/public/scene-image'
 
 const IndexRoute = IndexRouteImport.update({
   id: '/',
   path: '/',
   getParentRoute: () => rootRouteImport,
 } as any)
-const AnimacionesRoute = AnimacionesRouteImport.update({
-  id: '/animaciones',
-  path: '/animaciones',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const EditarRoute = EditarRouteImport.update({
-  id: '/editar',
-  path: '/editar',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const SubirRoute = SubirRouteImport.update({
-  id: '/subir',
-  path: '/subir',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const ApiPublicSceneImageRoute = ApiPublicSceneImageRouteImport.update({
-  id: '/api/public/scene-image',
-  path: '/api/public/scene-image',
-  getParentRoute: () => rootRouteImport,
-} as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
-  '/animaciones': typeof AnimacionesRoute
-  '/editar': typeof EditarRoute
-  '/subir': typeof SubirRoute
-  '/api/public/scene-image': typeof ApiPublicSceneImageRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
-  '/animaciones': typeof AnimacionesRoute
-  '/editar': typeof EditarRoute
-  '/subir': typeof SubirRoute
-  '/api/public/scene-image': typeof ApiPublicSceneImageRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
-  '/animaciones': typeof AnimacionesRoute
-  '/editar': typeof EditarRoute
-  '/subir': typeof SubirRoute
-  '/api/public/scene-image': typeof ApiPublicSceneImageRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths:
-    '/' | '/animaciones' | '/editar' | '/subir' | '/api/public/scene-image'
+  fullPaths: '/'
   fileRoutesByTo: FileRoutesByTo
-  to: '/' | '/animaciones' | '/editar' | '/subir' | '/api/public/scene-image'
-  id:
-    | '__root__'
-    | '/'
-    | '/animaciones'
-    | '/editar'
-    | '/subir'
-    | '/api/public/scene-image'
+  to: '/'
+  id: '__root__' | '/'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
-  AnimacionesRoute: typeof AnimacionesRoute
-  EditarRoute: typeof EditarRoute
-  SubirRoute: typeof SubirRoute
-  ApiPublicSceneImageRoute: typeof ApiPublicSceneImageRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -95,43 +48,11 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof IndexRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/animaciones': {
-      id: '/animaciones'
-      path: '/animaciones'
-      fullPath: '/animaciones'
-      preLoaderRoute: typeof AnimacionesRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/editar': {
-      id: '/editar'
-      path: '/editar'
-      fullPath: '/editar'
-      preLoaderRoute: typeof EditarRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/subir': {
-      id: '/subir'
-      path: '/subir'
-      fullPath: '/subir'
-      preLoaderRoute: typeof SubirRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/api/public/scene-image': {
-      id: '/api/public/scene-image'
-      path: '/api/public/scene-image'
-      fullPath: '/api/public/scene-image'
-      preLoaderRoute: typeof ApiPublicSceneImageRouteImport
-      parentRoute: typeof rootRouteImport
-    }
   }
 }
 
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
-  AnimacionesRoute: AnimacionesRoute,
-  EditarRoute: EditarRoute,
-  SubirRoute: SubirRoute,
-  ApiPublicSceneImageRoute: ApiPublicSceneImageRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)

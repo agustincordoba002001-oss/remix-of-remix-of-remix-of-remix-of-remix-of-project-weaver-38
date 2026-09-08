@@ -1,324 +1,248 @@
-import { createFileRoute, Link } from "@tanstack/react-router";
-import { useMutation } from "@tanstack/react-query";
+import { createFileRoute } from "@tanstack/react-router";
 import { useServerFn } from "@tanstack/react-start";
-import { useState } from "react";
-import { Film, Loader2, Sparkles, Upload } from "lucide-react";
+import { useEffect, useMemo, useRef, useState } from "react";
+import { Check, Loader2, Play, RotateCcw, Volume2 } from "lucide-react";
 import { toast } from "sonner";
 
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
-import { Input } from "@/components/ui/input";
 import { Toaster } from "@/components/ui/sonner";
-import { DOC_STYLES, DocPlayer, MOTION_STYLES, type DocMotion, type DocPaint, type DocStyle } from "@/components/DocPlayer";
-import { SelectorPintado, SelectorVoz } from "@/components/Controles";
-import { VOZ_POR_DEFECTO } from "@/lib/voces";
-import { buildDocumentary, type DocResult } from "@/lib/free-doc.functions";
-
+import { generarFrase } from "@/lib/narracion.functions";
+import marcas from "@/lib/marcas.json";
+import videoAsset from "@/assets/alunizaje.mp4.asset.json";
 
 export const Route = createFileRoute("/")({
   head: () => ({
     meta: [
-      { title: "Cronos — Documentales de historia gratis e ilimitados" },
+      { title: "El alunizaje — editor de frases y voz" },
       {
         name: "description",
         content:
-          "Escribí un tema histórico y Cronos arma un documental narrado en español con imágenes y videos reales de archivos libres. Sin créditos de uso.",
+          "Mirá el documental del alunizaje, andá al segundo exacto de cada frase, reescribila y generá otra vez la voz hasta que la pronunciación quede bien.",
       },
-      {
-        property: "og:title",
-        content: "Cronos — Documentales de historia gratis e ilimitados",
-      },
+      { property: "og:title", content: "El alunizaje — editor de frases y voz" },
       {
         property: "og:description",
-        content:
-          "De una idea a un documental narrado en español, con imágenes históricas y videos reales de archivos libres.",
+        content: "Corregí frase por frase el texto y la voz del documental del alunizaje.",
       },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary_large_image" },
     ],
   }),
-  component: Index,
+  component: EditorPage,
 });
 
-const IDEAS: string[] = [
-  "Colón llegando a América en 1492",
-  "La caída del Muro de Berlín",
-  "El cruce de los Andes por San Martín",
-  "La erupción del Vesubio sobre Pompeya",
-];
+type Marca = { t0: number; t1: number; txt: string };
+type Correccion = { texto: string; ritmo: number; claridad: number };
 
-function Index() {
-  const [topic, setTopic] = useState("Colón llegando a América en 1492");
-  const [style, setStyle] = useState<DocStyle>("anime");
-  const [motion, setMotion] = useState<DocMotion>("suave");
-  const [paint, setPaint] = useState<DocPaint>("pincel");
-  const [voz, setVoz] = useState<string>(VOZ_POR_DEFECTO);
-  const [imageSource, setImageSource] = useState<"archivo" | "generada">("generada");
+const LS = "correcciones-alunizaje";
 
-  const [scenes, setScenes] = useState(6);
-  const [doc, setDoc] = useState<DocResult | null>(null);
-  const [archive, setArchive] = useState<DocResult[]>([]);
+function mmss(s: number) {
+  if (!Number.isFinite(s)) return "0:00";
+  const m = Math.floor(s / 60);
+  const r = Math.floor(s % 60);
+  return `${m}:${r.toString().padStart(2, "0")}`;
+}
 
-  const build = useServerFn(buildDocumentary);
+function EditorPage() {
+  const lista = marcas as Marca[];
+  const videoRef = useRef<HTMLVideoElement | null>(null);
+  const audioRef = useRef<HTMLAudioElement | null>(null);
+  const [activa, setActiva] = useState(0);
+  const [t, setT] = useState(0);
+  const [texto, setTexto] = useState(lista[0]?.txt ?? "");
+  const [ritmo, setRitmo] = useState(1.06);
+  const [claridad, setClaridad] = useState(0.58);
+  const [prueba, setPrueba] = useState<string | null>(null);
+  const [cargando, setCargando] = useState(false);
+  const [aprobadas, setAprobadas] = useState<Record<number, Correccion>>({});
+  const sintetizar = useServerFn(generarFrase);
 
-  const start = useMutation({
-    mutationFn: () => build({ data: { topic, sceneCount: scenes, visualStyle: style, imageSource } }),
-    onSuccess: (res) => {
-      setDoc(res);
-      setArchive((a) => [res, ...a.filter((d) => d.title !== res.title)].slice(0, 6));
-      toast.success(`Documental listo: ${res.title}`);
-    },
-    onError: (e: Error) => toast.error(e.message),
-  });
+  useEffect(() => {
+    try {
+      const raw = localStorage.getItem(LS);
+      if (raw) setAprobadas(JSON.parse(raw) as Record<number, Correccion>);
+    } catch {
+      /* sin correcciones guardadas */
+    }
+  }, []);
+
+  function guardar(next: Record<number, Correccion>) {
+    setAprobadas(next);
+    localStorage.setItem(LS, JSON.stringify(next));
+  }
+
+  function abrir(i: number) {
+    setActiva(i);
+    setPrueba(null);
+    const guardada = aprobadas[i];
+    setTexto(guardada?.texto ?? lista[i]?.txt ?? "");
+    setRitmo(guardada?.ritmo ?? 1.06);
+    setClaridad(guardada?.claridad ?? 0.58);
+    const v = videoRef.current;
+    if (v) {
+      v.currentTime = Math.max(0, (lista[i]?.t0 ?? 0) - 0.2);
+      void v.play();
+    }
+  }
+
+  async function generar() {
+    if (!texto.trim()) return;
+    setCargando(true);
+    setPrueba(null);
+    try {
+      const r = await sintetizar({ data: { texto: texto.trim(), ritmo, claridad } });
+      setPrueba(r.audio);
+      toast.success("Voz generada: escuchala antes de aprobar");
+    } catch {
+      toast.error("No se pudo generar la voz. Probá de nuevo.");
+    } finally {
+      setCargando(false);
+    }
+  }
+
+  function aprobar() {
+    guardar({ ...aprobadas, [activa]: { texto: texto.trim(), ritmo, claridad } });
+    toast.success(`Frase ${activa + 1} aprobada`);
+  }
+
+  function descartar() {
+    const next = { ...aprobadas };
+    delete next[activa];
+    guardar(next);
+    setTexto(lista[activa]?.txt ?? "");
+    setPrueba(null);
+  }
+
+  const enCurso = useMemo(() => {
+    let idx = 0;
+    for (let i = 0; i < lista.length; i++) if (t >= (lista[i]?.t0 ?? 0)) idx = i;
+    return idx;
+  }, [t, lista]);
+
+  const totalAprobadas = Object.keys(aprobadas).length;
 
   return (
-    <main className="min-h-screen">
+    <main className="min-h-screen bg-background">
       <Toaster />
-      <div className="grain-overlay">
-        <header className="mx-auto max-w-5xl px-6 pt-16 pb-10">
-          <div className="flex items-center gap-2 text-xs uppercase tracking-[0.35em] text-muted-foreground">
-            <Film className="h-4 w-4 text-primary" />
-            Cronos Estudio
-          </div>
-          <h1 className="mt-6 max-w-3xl text-5xl leading-[1.05] font-semibold sm:text-7xl">
-            Documentales de <span className="text-gold flicker">historia</span>, gratis
-            e ilimitados.
-          </h1>
-          <p className="mt-5 max-w-xl text-base text-muted-foreground">
-            Escribí un hecho histórico. Cronos arma el relato y combina imágenes con
-            videos reales de archivos libres, siguiendo lo que cuenta la voz en español.
+      <header className="mx-auto max-w-6xl px-6 pt-14 pb-6">
+        <p className="text-xs uppercase tracking-[0.35em] text-muted-foreground">
+          El alunizaje · volumen 1
+        </p>
+        <h1 className="mt-4 text-4xl leading-[1.05] font-semibold sm:text-5xl">
+          Corregí una frase y volvé a generar su voz.
+        </h1>
+        <p className="mt-4 max-w-2xl text-base text-muted-foreground">
+          Elegí la frase de la lista: el video salta a ese segundo. Reescribí el texto,
+          generá la voz, escuchala y aprobala. Cuando termines de aprobar, avisame en el
+          chat y rearmo el video completo con esas correcciones.
+        </p>
+      </header>
+
+      <section className="mx-auto grid max-w-6xl gap-6 px-6 pb-24 lg:grid-cols-[1.1fr_1fr]">
+        <div className="space-y-4">
+          <video
+            ref={videoRef}
+            src={videoAsset.url}
+            controls
+            playsInline
+            preload="metadata"
+            onTimeUpdate={(e) => setT(e.currentTarget.currentTime)}
+            className="w-full rounded-lg border border-border/70 bg-black"
+          />
+          <p className="text-xs text-muted-foreground">
+            {mmss(t)} · sonando la frase {enCurso + 1} de {lista.length} ·{" "}
+            {totalAprobadas} correcciones aprobadas
           </p>
-          <div className="mt-6 flex flex-wrap gap-3">
-            <Link
-              to="/subir"
-              className="inline-flex items-center gap-2 rounded-full border border-border/70 px-4 py-2 text-sm transition-colors hover:border-primary/60 hover:text-primary"
-            >
-              <Upload className="h-4 w-4" /> ¿Ya tenés guion e imágenes? Subilos acá
-            </Link>
-            <Link
-              to="/animaciones"
-              className="inline-flex items-center gap-2 rounded-full border border-border/70 px-4 py-2 text-sm transition-colors hover:border-primary/60 hover:text-primary"
-            >
-              Animaciones de dibujo a mano
-            </Link>
-            <Link
-              to="/editar"
-              className="inline-flex items-center gap-2 rounded-full border border-border/70 px-4 py-2 text-sm transition-colors hover:border-primary/60 hover:text-primary"
-            >
-              <Upload className="h-4 w-4" /> Subir un video para corregir
-            </Link>
 
-          </div>
-
-          <div className="rule-gold mt-10 h-px w-32 opacity-70" />
-
-        </header>
-
-        <section className="mx-auto max-w-5xl px-6 pb-24">
-          <Card className="border-border/70 bg-card/70 shadow-reel p-6 backdrop-blur sm:p-8">
-            <label className="text-xs uppercase tracking-[0.2em] text-muted-foreground">
-              Tema del documental
-            </label>
-            <Input
-              value={topic}
-              onChange={(e) => setTopic(e.target.value)}
-              placeholder="Colón llegando a América"
-              className="mt-3 h-14 border-border/70 bg-background/60 font-display text-lg"
+          <Card className="border-border/70 bg-card/70 p-5">
+            <p className="text-xs uppercase tracking-[0.2em] text-muted-foreground">
+              Frase {activa + 1} · {mmss(lista[activa]?.t0 ?? 0)}
+            </p>
+            <textarea
+              value={texto}
+              onChange={(e) => setTexto(e.target.value)}
+              rows={4}
+              className="mt-3 w-full rounded-md border border-border/70 bg-background/60 p-3 text-base leading-relaxed"
             />
+            <p className="mt-2 text-xs text-muted-foreground">
+              Para que pronuncie bien en inglés, escribilo como suena: Quénedi, Ármstrong,
+              Washintong. Las fechas y los años, en cifras.
+            </p>
 
-            <div className="mt-4 flex flex-wrap gap-2">
-              {IDEAS.map((idea) => (
-                <button
-                  key={idea}
-                  onClick={() => setTopic(idea)}
-                  className="rounded-full border border-border/70 px-3 py-1 text-xs text-muted-foreground transition-colors hover:border-primary/60 hover:text-primary"
-                >
-                  {idea}
-                </button>
-              ))}
+            <div className="mt-4 grid gap-4 sm:grid-cols-2">
+              <label className="text-xs uppercase tracking-[0.2em] text-muted-foreground">
+                Velocidad · {ritmo.toFixed(2)}
+                <input
+                  type="range"
+                  min={0.94}
+                  max={1.18}
+                  step={0.01}
+                  value={ritmo}
+                  onChange={(e) => setRitmo(Number(e.target.value))}
+                  className="mt-2 w-full accent-primary"
+                />
+              </label>
+              <label className="text-xs uppercase tracking-[0.2em] text-muted-foreground">
+                Claridad · {claridad.toFixed(2)}
+                <input
+                  type="range"
+                  min={0.45}
+                  max={0.75}
+                  step={0.01}
+                  value={claridad}
+                  onChange={(e) => setClaridad(Number(e.target.value))}
+                  className="mt-2 w-full accent-primary"
+                />
+              </label>
             </div>
 
-            <div className="mt-8 grid gap-3 sm:grid-cols-4">
-              {DOC_STYLES.map((s) => (
-                <button
-                  key={s.id}
-                  onClick={() => setStyle(s.id)}
-                  className={`rounded-md border p-4 text-left transition-all ${
-                    style === s.id
-                      ? "border-primary bg-primary/10"
-                      : "border-border/70 hover:border-primary/50"
-                  }`}
-                >
-                  <span className="block font-display text-base">{s.label}</span>
-                  <span className="mt-1 block text-xs text-muted-foreground">
-                    {s.hint}
-                  </span>
-                </button>
-              ))}
-            </div>
-
-            <div className="mt-6 grid gap-6 sm:grid-cols-2">
-              <div>
-                <span className="text-xs uppercase tracking-[0.2em] text-muted-foreground">
-                  Imágenes
-                </span>
-                <div className="mt-3 flex flex-wrap gap-2">
-                  <button
-                    onClick={() => setImageSource("archivo")}
-                    className={`rounded-full px-3 py-1 text-sm transition-colors ${
-                      imageSource === "archivo"
-                        ? "bg-primary text-primary-foreground"
-                        : "border border-border/70 text-muted-foreground hover:text-primary"
-                    }`}
-                  >
-                    De archivo libre
-                  </button>
-                  <button
-                    onClick={() => setImageSource("generada")}
-                    className={`rounded-full px-3 py-1 text-sm transition-colors ${
-                      imageSource === "generada"
-                        ? "bg-primary text-primary-foreground"
-                        : "border border-border/70 text-muted-foreground hover:text-primary"
-                    }`}
-                  >
-                    Ilustradas por IA
-                  </button>
-                </div>
-                <p className="mt-2 text-[11px] leading-relaxed text-muted-foreground">
-                  {imageSource === "generada"
-                    ? "Ilustraciones creadas con IA, todas con el mismo estilo visual del documental."
-                    : "Fotos, obras y videos reales de Wikimedia Commons, con autor y licencia visibles."}
-                </p>
-              </div>
-              <div>
-                <span className="text-xs uppercase tracking-[0.2em] text-muted-foreground">
-                  Animación
-                </span>
-                <div className="mt-3 flex flex-wrap gap-2">
-                  {MOTION_STYLES.map((mt) => (
-                    <button
-                      key={mt.id}
-                      onClick={() => setMotion(mt.id)}
-                      className={`rounded-full px-3 py-1 text-sm transition-colors ${
-                        motion === mt.id
-                          ? "bg-primary text-primary-foreground"
-                          : "border border-border/70 text-muted-foreground hover:text-primary"
-                      }`}
-                    >
-                      {mt.label}
-                    </button>
-                  ))}
-                </div>
-                <p className="mt-2 text-[11px] leading-relaxed text-muted-foreground">
-                  {MOTION_STYLES.find((x) => x.id === motion)?.hint}. Sin subtítulos: el
-                  relato es solo voz.
-                </p>
-              </div>
-            </div>
-
-            <div className="mt-6">
-              <SelectorPintado paint={paint} onChange={setPaint} />
-            </div>
-
-            <div className="mt-6">
-              <SelectorVoz voz={voz} onChange={setVoz} />
-            </div>
-
-
-
-            <div className="mt-8 flex flex-wrap items-center justify-between gap-4">
-              <div className="flex items-center gap-2">
-                <span className="text-xs uppercase tracking-[0.2em] text-muted-foreground">
-                  Escenas
-                </span>
-                {[4, 6, 8, 10].map((v) => (
-                  <button
-                    key={v}
-                    onClick={() => setScenes(v)}
-                    className={`rounded-full px-3 py-1 text-sm transition-colors ${
-                      scenes === v
-                        ? "bg-primary text-primary-foreground"
-                        : "border border-border/70 text-muted-foreground hover:text-primary"
-                    }`}
-                  >
-                    {v}
-                  </button>
-                ))}
-              </div>
-
-              <Button
-                size="lg"
-                disabled={start.isPending || topic.trim().length < 4}
-                onClick={() => start.mutate()}
-                className="gap-2"
-              >
-                {start.isPending ? (
-                  <Loader2 className="h-4 w-4 animate-spin" />
+            <div className="mt-5 flex flex-wrap gap-2">
+              <Button onClick={() => void generar()} disabled={cargando} className="h-11">
+                {cargando ? (
+                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
                 ) : (
-                  <Sparkles className="h-4 w-4" />
+                  <Volume2 className="mr-2 h-4 w-4" />
                 )}
-                {start.isPending
-                  ? imageSource === "generada"
-                    ? "Creando el material visual…"
-                    : "Buscando imágenes y videos libres…"
-                  : "Generar documental"}
+                Generar la voz
+              </Button>
+              <Button
+                variant="ghost"
+                className="h-11"
+                disabled={!prueba}
+                onClick={() => void audioRef.current?.play()}
+              >
+                <Play className="mr-2 h-4 w-4" /> Escuchar
+              </Button>
+              <Button variant="ghost" className="h-11" disabled={!prueba} onClick={aprobar}>
+                <Check className="mr-2 h-4 w-4" /> Aprobar
+              </Button>
+              <Button variant="ghost" className="h-11" onClick={descartar}>
+                <RotateCcw className="mr-2 h-4 w-4" /> Volver al original
               </Button>
             </div>
+            {prueba && <audio ref={audioRef} src={prueba} controls className="mt-4 w-full" />}
           </Card>
+        </div>
 
-          {doc && (
-            <div className="mt-8">
-              <DocPlayer doc={doc} style={style} motion={motion} paint={paint} voz={voz} />
-              <div className="mt-6 rounded-md border border-border/60 bg-card/60 p-6">
-                <p className="text-xs uppercase tracking-[0.2em] text-muted-foreground">
-                  Relato completo
-                </p>
-                <p className="mt-3 font-display text-lg leading-relaxed">
-                  {doc.narration}
-                </p>
-                <a
-                  href={doc.source}
-                  target="_blank"
-                  rel="noreferrer"
-                  className="mt-4 inline-block text-xs text-primary underline"
-                >
-                  Fuente del texto y material libre
-                </a>
-              </div>
-            </div>
-          )}
-
-          {archive.length > 1 && (
-            <div className="mt-20">
-              <h2 className="text-2xl font-semibold">Archivo del estudio</h2>
-              <div className="mt-6 grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
-                {archive.map((d) => (
-                  <button
-                    key={d.title}
-                    onClick={() => setDoc(d)}
-                    className="overflow-hidden rounded-md border border-border/70 bg-card/70 text-left transition-colors hover:border-primary/60"
-                  >
-                    <div className="aspect-video bg-background/80">
-                      <img
-                        src={d.scenes[0]!.image}
-                        alt={d.title}
-                        loading="lazy"
-                        className="h-full w-full object-cover"
-                      />
-                    </div>
-                    <div className="p-4">
-                      <p className="font-display text-base">{d.title}</p>
-                      <p className="mt-1 text-xs text-muted-foreground">
-                        {d.scenes.length} escenas
-                      </p>
-                    </div>
-                  </button>
-                ))}
-              </div>
-            </div>
-          )}
-        </section>
-      </div>
+        <Card className="max-h-[70vh] overflow-y-auto border-border/70 bg-card/60 p-2">
+          {lista.map((m, i) => (
+            <button
+              key={i}
+              onClick={() => abrir(i)}
+              className={`block w-full rounded-md px-3 py-2 text-left text-sm transition-colors ${
+                i === activa
+                  ? "bg-primary/15 text-foreground"
+                  : "text-muted-foreground hover:bg-muted/40"
+              }`}
+            >
+              <span className="mr-2 text-xs tabular-nums text-primary">{mmss(m.t0)}</span>
+              {aprobadas[i] ? aprobadas[i].texto : m.txt}
+              {aprobadas[i] && <Check className="ml-2 inline h-3 w-3 text-primary" />}
+            </button>
+          ))}
+        </Card>
+      </section>
     </main>
   );
 }
