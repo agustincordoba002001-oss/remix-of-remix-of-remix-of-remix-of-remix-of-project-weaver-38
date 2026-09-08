@@ -1,13 +1,13 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useServerFn } from "@tanstack/react-start";
 import { useEffect, useMemo, useRef, useState } from "react";
-import { Check, Loader2, Play, RotateCcw, Volume2 } from "lucide-react";
+import { Check, Film, Loader2, Play, RotateCcw, Volume2 } from "lucide-react";
 import { toast } from "sonner";
 
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Toaster } from "@/components/ui/sonner";
-import { generarFrase } from "@/lib/narracion.functions";
+import { generarFrase, pedirVideoFinal } from "@/lib/narracion.functions";
 import marcas from "@/lib/marcas.json";
 import videoAsset from "@/assets/alunizaje.mp4.asset.json";
 
@@ -56,6 +56,7 @@ function EditorPage() {
   const [cargando, setCargando] = useState(false);
   const [aprobadas, setAprobadas] = useState<Record<number, Correccion>>({});
   const sintetizar = useServerFn(generarFrase);
+  const enviarPedido = useServerFn(pedirVideoFinal);
 
   useEffect(() => {
     try {
