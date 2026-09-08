@@ -76,8 +76,6 @@ function EditorPage() {
     setPrueba(null);
     const guardada = aprobadas[i];
     setTexto(guardada?.texto ?? lista[i]?.txt ?? "");
-    setRitmo(guardada?.ritmo ?? 1.06);
-    setClaridad(guardada?.claridad ?? 0.58);
     const v = videoRef.current;
     if (v) {
       v.currentTime = Math.max(0, (lista[i]?.t0 ?? 0) - 0.2);
@@ -90,7 +88,7 @@ function EditorPage() {
     setCargando(true);
     setPrueba(null);
     try {
-      const r = await sintetizar({ data: { texto: texto.trim(), ritmo, claridad } });
+      const r = await sintetizar({ data: { texto: texto.trim() } });
       setPrueba(r.audio);
       toast.success("Voz generada: escuchala antes de aprobar");
     } catch {
@@ -101,7 +99,7 @@ function EditorPage() {
   }
 
   function aprobar() {
-    guardar({ ...aprobadas, [activa]: { texto: texto.trim(), ritmo, claridad } });
+    guardar({ ...aprobadas, [activa]: { texto: texto.trim() } });
     toast.success(`Frase ${activa + 1} aprobada`);
   }
 
@@ -169,32 +167,11 @@ function EditorPage() {
               Washintong. Las fechas y los años, en cifras.
             </p>
 
-            <div className="mt-4 grid gap-4 sm:grid-cols-2">
-              <label className="text-xs uppercase tracking-[0.2em] text-muted-foreground">
-                Velocidad · {ritmo.toFixed(2)}
-                <input
-                  type="range"
-                  min={0.94}
-                  max={1.18}
-                  step={0.01}
-                  value={ritmo}
-                  onChange={(e) => setRitmo(Number(e.target.value))}
-                  className="mt-2 w-full accent-primary"
-                />
-              </label>
-              <label className="text-xs uppercase tracking-[0.2em] text-muted-foreground">
-                Claridad · {claridad.toFixed(2)}
-                <input
-                  type="range"
-                  min={0.45}
-                  max={0.75}
-                  step={0.01}
-                  value={claridad}
-                  onChange={(e) => setClaridad(Number(e.target.value))}
-                  className="mt-2 w-full accent-primary"
-                />
-              </label>
-            </div>
+            <p className="mt-2 text-xs text-muted-foreground">
+              La voz sale con la misma entonación, velocidad y calidad que el video: no
+              hay nada que ajustar.
+            </p>
+
 
             <div className="mt-5 flex flex-wrap gap-2">
               <Button onClick={() => void generar()} disabled={cargando} className="h-11">
