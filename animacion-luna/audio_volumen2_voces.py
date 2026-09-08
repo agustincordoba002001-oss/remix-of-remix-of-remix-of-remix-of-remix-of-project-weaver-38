@@ -29,7 +29,7 @@ segs = [
  ("D", "Salí una noche al patio... y mirá para arriba. Ahí está: la Luna.", 0.45),
  ("D", "La misma que vieron los egipcios, los romanos... y tu bisabuelo. Blanca. Quieta. Inalcanzable.", 0.50),
  ("D", "Y en apenas ocho años, un grupo de ingenieros, con reglas de cálculo y café frío, la pisó.", 0.55),
- ("D", "Todo arranca el veinticinco de mayo de mil novecientos sesenta y uno. Quénedi se para frente al Congreso... y promete algo enorme:", 0.40),
+ ("D", "Todo arranca el veinticinco de mayo de mil novecientos sesenta y uno, cuando Quénedi se para frente al Congreso y promete algo enorme:", 0.40),
  ("X", "Esta nación debe poner un hombre en la Luna antes del fin de la década, y devolverlo sano y salvo.", 0.55),
  ("D", "La sala aplaude. En la Nása... varios ingenieros se ponen pálidos.", 0.45),
  ("D", "Porque Estados Unidos tenía apenas quince minutos de experiencia en vuelo tripulado. Quince minutos: un salto corto de Álan Shéperd.", 0.45),
@@ -39,7 +39,7 @@ segs = [
  ("D", "Ellos eran Vércheil Gas Grísom: veterano, y el segundo estadounidense en el espacio.", 0.35),
  ("D", "Ed Uáit: el primer norteamericano en caminar fuera de la nave.", 0.35),
  ("D", "Y Róyer Cháfi: joven, ingeniero, a punto de volar por primera vez.", 0.50),
- ("D", "Veintisiete de enero de mil novecientos sesenta y siete. Ni siquiera era un lanzamiento: era un ensayo en tierra, con la cápsula del Apolo uno cerrada, y llena de oxígeno puro a presión.", 0.45),
+ ("D", "Es el veintisiete de enero de mil novecientos sesenta y siete, y ni siquiera era un lanzamiento: era un ensayo en tierra, con la cápsula del Apolo uno cerrada, y llena de oxígeno puro a presión.", 0.45),
  ("D", "Un cable pelado hizo una chispa. En oxígeno puro, todo lo que toca el fuego se convierte en combustible.", 0.45),
  ("D", "La escotilla se abría hacia adentro, y tardaba minutos en ceder. Los tres murieron en menos de treinta segundos.", 0.65),
  ("X", "Este es un negocio riesgoso.", 0.45),
@@ -91,6 +91,9 @@ def ritmo(txt: str, gap: float) -> float:
         v -= 0.035
     if len(txt) > 140:            # frases largas: no arrastrarlas
         v -= 0.025
+    # fechas y cifras: se dicen de corrido, sin trabarse
+    if 'mil novecientos' in t or 'veinticinco' in t or 'veintisiete' in t:
+        v -= 0.07
     return round(min(1.07, max(0.94, v)), 3)
 
 
