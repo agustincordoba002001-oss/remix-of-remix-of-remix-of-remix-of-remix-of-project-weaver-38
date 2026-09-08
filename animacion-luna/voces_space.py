@@ -16,7 +16,8 @@ VOCES = {
     # Lilith (más humana, con variación melódica y ritmo natural).
     "elena": {
         "modelPath": "models/es_ARG-Elena.onnx",
-        "settings": {"speaker": 0, "noise_scale": 0.78, "length_scale": 1.10, "noise_w": 0.90},
+        # noise_scale bajo = dicción limpia; el ritmo algo lento evita que se coma sílabas.
+        "settings": {"speaker": 0, "noise_scale": 0.60, "length_scale": 1.14, "noise_w": 0.72},
     },
     # Voz de las citas y frases graves: más lenta y sobria.
     "dark": {

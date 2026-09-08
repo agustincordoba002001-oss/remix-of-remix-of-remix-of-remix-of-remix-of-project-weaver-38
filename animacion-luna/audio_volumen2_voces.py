@@ -75,9 +75,9 @@ for i, (who, txt, gap) in enumerate(segs):
     # dicen más despacio y con más melodía; las de pausa corta, más ágiles.
     if voz == 'elena':
         ajustes = {
-            'length_scale': round(1.04 + min(gap, 0.65) * 0.20, 3),
-            'noise_scale': round(0.74 + (i % 3) * 0.025, 3),
-            'noise_w': round(0.88 + (i % 2) * 0.04, 3),
+            'length_scale': round(1.10 + min(gap, 0.65) * 0.14, 3),
+            'noise_scale': round(0.58 + (i % 3) * 0.02, 3),
+            'noise_w': round(0.70 + (i % 2) * 0.03, 3),
         }
     else:
         ajustes = None
