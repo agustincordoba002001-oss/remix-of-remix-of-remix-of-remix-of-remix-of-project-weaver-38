@@ -12,3 +12,10 @@
 - [x] Comprobar que un clip roto vuelva automáticamente a la imagen de archivo
 
 - [x] Terminar la animación Volumen 1 del alunizaje hasta el final del guión
+
+## Video LA GUERRA FRÍA (en curso)
+- [x] Guion: animacion-luna/guion_guerrafria.py (237 escenas, ~23,8 min)
+- [x] Narración Dark: /mnt/documents/gf/full.wav + marks_full.json (audio_guerrafria.py)
+- [ ] Dibujos únicos: /mnt/documents/ref_gf/gNNN.png (faltan del g012 al g236)
+- [ ] Render por tramos con animacion-luna/build_guerrafria.py y concatenar a
+      /mnt/documents/guerra_fria_completo.mp4
