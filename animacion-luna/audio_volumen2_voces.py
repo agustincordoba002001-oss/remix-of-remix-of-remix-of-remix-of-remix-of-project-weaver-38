@@ -160,13 +160,27 @@ for k in range(int(T / 3.5)):
     mus[s0:s0 + d] += np.sin(2 * np.pi * f * tt) * np.exp(-tt / 0.6) * 0.018
 k = 20
 mus = np.convolve(mus, np.ones(k, np.float32) / k, mode='same')
-mus *= 0.22
+mus *= 0.16
 fade = int(3.5 * SR)
 mus[:fade] *= np.linspace(0, 1, fade)
 mus[-fade:] *= np.linspace(1, 0, fade)
 
+# La música se aparta cuando entra la voz (ducking suave), para que la
+# narración se escuche siempre clara y la mezcla no sature.
+env = np.zeros(n, np.float32)
+env[:len(voz)] = np.abs(voz[:n])
+w = int(0.25 * SR)
+env = np.convolve(env, np.ones(w, np.float32) / w, mode='same')
+duck = 1.0 - 0.62 * np.clip(env / 0.09, 0, 1)
+w2 = int(0.35 * SR)
+duck = np.convolve(duck, np.ones(w2, np.float32) / w2, mode='same')
+mus *= duck
+
 out = mus.copy()
 out[:len(voz)] += voz
+pico = float(np.abs(out).max())
+if pico > 0.89:
+    out *= 0.89 / pico
 out = np.clip(out, -1, 1)
 with wave.open(f'{TMP}/v2_2min.wav', 'wb') as w:
     w.setnchannels(1)
