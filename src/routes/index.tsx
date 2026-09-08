@@ -101,6 +101,13 @@ function Index() {
             >
               Animaciones de dibujo a mano
             </Link>
+            <Link
+              to="/editar"
+              className="inline-flex items-center gap-2 rounded-full border border-border/70 px-4 py-2 text-sm transition-colors hover:border-primary/60 hover:text-primary"
+            >
+              <Upload className="h-4 w-4" /> Subir un video para corregir
+            </Link>
+
           </div>
 
           <div className="rule-gold mt-10 h-px w-32 opacity-70" />
