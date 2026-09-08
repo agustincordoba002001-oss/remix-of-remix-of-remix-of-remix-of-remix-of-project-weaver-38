@@ -34,12 +34,17 @@ export const generarFrase = createServerFn({ method: "POST" })
           headers: { "Content-Type": "application/json" },
           body,
         });
-        const json = (await res.json()) as { success?: boolean; audio?: string; error?: string };
-        if (json.success && json.audio) {
+        const json = (await res.json()) as {
+          success?: boolean;
+          audio?: string;
+          error?: string;
+        };
+        // El servicio responde { audio: "data:audio/wav;base64,..." }, a veces sin "success".
+        if (json.audio && json.success !== false) {
           const audio = json.audio.includes(",") ? json.audio.split(",").pop()! : json.audio;
           return { audio: `data:audio/wav;base64,${audio}` };
         }
-        ultimo = json.error ?? "respuesta inválida";
+        ultimo = json.error ?? `respuesta inválida (${res.status})`;
       } catch (err) {
         ultimo = err instanceof Error ? err.message : String(err);
       }
