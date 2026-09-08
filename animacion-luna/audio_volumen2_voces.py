@@ -71,10 +71,20 @@ marks = []
 tcur = 0.35
 for i, (who, txt, gap) in enumerate(segs):
     voz = 'elena' if who == 'D' else 'dark'
+    # Variación de expresividad frase a frase: las frases con pausa larga se
+    # dicen más despacio y con más melodía; las de pausa corta, más ágiles.
+    if voz == 'elena':
+        ajustes = {
+            'length_scale': round(1.04 + min(gap, 0.65) * 0.20, 3),
+            'noise_scale': round(0.74 + (i % 3) * 0.025, 3),
+            'noise_w': round(0.88 + (i % 2) * 0.04, 3),
+        }
+    else:
+        ajustes = None
     raw = f'/tmp/voces_seg/{i:02d}_{voz}.wav'
     dst = f'/tmp/voces_seg/{i:02d}_{voz}_master.wav'
     if not os.path.exists(raw):
-        sintetizar(txt, voz, raw)
+        sintetizar(txt, voz, raw, ajustes=ajustes)
     if not os.path.exists(dst):
         masterizar(raw, dst, voz)
     a = recortar_silencio(leer_wav(dst))
