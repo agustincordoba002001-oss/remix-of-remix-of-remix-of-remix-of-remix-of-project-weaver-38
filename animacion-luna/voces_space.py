@@ -12,11 +12,12 @@ ENDPOINT = "https://hircoir-piper-tts-spanish.hf.space/convert"
 
 # Voces fijas del proyecto.
 VOCES = {
-    # Narradora principal: Elena argentina, calibrada para expresarse como
+    # Narradora principal: Elena argentina (es_ARG-Elena), calibrada para expresarse como
     # Lilith (más humana, con variación melódica y ritmo natural).
     "elena": {
-        "modelPath": "models/es_AR-microsoft-elena.onnx",
-        "settings": {"speaker": 0, "noise_scale": 0.78, "length_scale": 1.10, "noise_w": 0.90},
+        "modelPath": "models/es_ARG-Elena.onnx",
+        # noise_scale bajo = dicción limpia; el ritmo algo lento evita que se coma sílabas.
+        "settings": {"speaker": 0, "noise_scale": 0.60, "length_scale": 1.14, "noise_w": 0.72},
     },
     # Voz de las citas y frases graves: más lenta y sobria.
     "dark": {
