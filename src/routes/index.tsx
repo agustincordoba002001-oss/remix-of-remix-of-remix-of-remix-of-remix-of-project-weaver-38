@@ -33,7 +33,7 @@ export const Route = createFileRoute("/")({
 });
 
 type Marca = { t0: number; t1: number; txt: string };
-type Correccion = { texto: string; ritmo: number; claridad: number };
+type Correccion = { texto: string };
 
 const LS = "correcciones-alunizaje";
 
@@ -51,8 +51,7 @@ function EditorPage() {
   const [activa, setActiva] = useState(0);
   const [t, setT] = useState(0);
   const [texto, setTexto] = useState(lista[0]?.txt ?? "");
-  const [ritmo, setRitmo] = useState(1.06);
-  const [claridad, setClaridad] = useState(0.58);
+  const [enviando, setEnviando] = useState(false);
   const [prueba, setPrueba] = useState<string | null>(null);
   const [cargando, setCargando] = useState(false);
   const [aprobadas, setAprobadas] = useState<Record<number, Correccion>>({});
