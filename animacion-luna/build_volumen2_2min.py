@@ -89,7 +89,7 @@ def text_layer(lines, colors, f, spacing=6):
     return lay
 
 
-SCREENS = [
+SCREENS_ALL = [
     [('t', ['EL ALUNIZAJE'], [RED], F_TITLE, 90, 90), ('t', ['LA HISTORIA COMPLETA'], [BLUE], F_MED, 108, 190), ('i', 'luna', 840, 200)],
     [('i', 'patio', 120, 130), ('t', ['LA MISMA LUNA'], [BLUE], F_MED, 520, 120), ('t', ['DE LOS EGIPCIOS,', 'LOS ROMANOS', 'Y TU BISABUELO'], [INK, INK, GOLD], F_BIG, 520, 200)],
     [('t', ['OCHO AÑOS'], [RED], F_TITLE, 90, 100), ('t', ['REGLAS DE CÁLCULO', 'Y CAFÉ FRÍO'], [INK, BLUE], F_MED, 100, 210), ('i', 'saturno', 830, 130)],
@@ -115,6 +115,7 @@ SCREENS = [
     [('i', 'huella', 130, 170), ('t', ['ESA HUELLA', 'SIGUE AHÍ'], [BLUE, RED], F_BIG, 700, 120), ('t', ['Y EMPEZÓ CON TRES', 'QUE NO DESPEGARON'], [INK, GOLD], F_MED, 660, 260)],
 ]
 
+SCREENS = SCREENS_ALL[:18]
 STARTS = [max(0.0, m['t0'] - 0.25) for m in MARKS][:len(SCREENS)]
 
 
@@ -198,13 +199,9 @@ for frame in range(N):
         else:
             canvas.paste(el['im'], (el['x'], el['y']), el['im'])
     if tip:
-        ang = math.sin(t * 13) * 3.5
-        h = hand.rotate(ang, resample=Image.BICUBIC, center=(TIPX, TIPY))
         hx = int(max(-200, min(W - 40, tip[0] - TIPX)))
-        hy = int(max(-200, min(H - 45, tip[1] - TIPY + math.sin(t * 26) * 2)))
-        canvas.paste(h, (hx, hy), h)
-    d = ImageDraw.Draw(canvas)
-    d.text((70, 686), 'ANIMACIÓN LUNA  ·  VOLUMEN 2  ·  EL ALUNIZAJE', font=F_TINY, fill=(150, 152, 155))
+        hy = int(max(-200, min(H - 45, tip[1] - TIPY)))
+        canvas.paste(hand, (hx, hy), hand)
     proc.stdin.write(canvas.tobytes())
 proc.stdin.close()
 code = proc.wait()
