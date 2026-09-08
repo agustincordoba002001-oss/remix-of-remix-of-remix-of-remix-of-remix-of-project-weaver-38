@@ -25,12 +25,7 @@ segs = [
  ("D", "Un cable pelado hizo una chispa. En oxígeno puro, todo lo que toca el fuego se convierte en combustible.", 0.35),
  ("D", "La escotilla se abría hacia adentro y tardaba minutos en ceder. Los tres murieron en menos de treinta segundos.", 0.40),
  ("X", "Este es un negocio riesgoso.", 0.30),
- ("D", "Lo había advertido Grissom meses antes. Después de ese incendio, la NASA rediseñó la nave entera.", 0.35),
- ("D", "Un año y medio más tarde, en la Navidad de mil novecientos sesenta y ocho, el Apolo ocho dio diez vueltas alrededor de la Luna.", 0.35),
- ("D", "Desde ahí sacaron la foto de la Tierra saliendo sobre el horizonte lunar. Por primera vez nos vimos chiquitos, y de lejos.", 0.40),
- ("D", "El veinte de julio de mil novecientos sesenta y nueve, el módulo Águila bajó con menos de treinta segundos de combustible.", 0.35),
- ("D", "Y un hombre apoyó la bota en el polvo gris de un mundo que nunca había sido pisado.", 0.40),
- ("D", "Esa huella sigue ahí, intacta. Y empezó con tres tipos que no llegaron a despegar.", 0.0),
+ ("D", "Lo había advertido Grissom meses antes. Después de ese incendio, la NASA rediseñó la nave entera. Y esa tragedia, aunque duela decirlo, fue lo que hizo posible llegar a la Luna.", 0.0),
 ]
 
 cfgD = SynthesisConfig(length_scale=1.0, noise_scale=0.60, noise_w_scale=0.75)
@@ -54,27 +49,40 @@ voz = np.concatenate(parts)
 T = len(voz) / SR + 1.0
 n = int(T * SR)
 
-# Cama musical suave: pad cálido, sin pulso, volumen bajo y filtrado.
+# Música temática espacial: drone grave, pad suspendido y destellos lentos.
 mus = np.zeros(n, np.float32)
-chords = [[220.0, 261.63, 329.63], [196.0, 246.94, 293.66],
-          [174.61, 220.0, 261.63], [196.0, 261.63, 311.13]]
-bar = 8.0
+tt_all = np.arange(n) / SR
+# drone profundo con leve batido
+mus += (np.sin(2*np.pi*55.0*tt_all) * 0.10 + np.sin(2*np.pi*55.4*tt_all) * 0.08)
+mus += np.sin(2*np.pi*110.0*tt_all) * 0.05 * (0.6 + 0.4*np.sin(2*np.pi*0.05*tt_all))
+# pad suspendido que respira, progresión lenta en menor
+chords = [[220.00, 293.66, 329.63], [196.00, 261.63, 329.63],
+          [174.61, 261.63, 349.23], [164.81, 246.94, 329.63]]
+bar = 12.0
 for i in range(int(T / bar) + 1):
     ch = chords[i % 4]
-    s = int(i * bar * SR)
-    if s >= n:
+    s0 = int(i * bar * SR)
+    if s0 >= n:
         break
-    d = min(int(bar * SR), n - s)
+    d = min(int(bar * SR), n - s0)
     tt = np.arange(d) / SR
-    env = np.minimum(1, tt / 2.4) * np.exp(-tt / 12.0)
+    env = np.minimum(1, tt / 4.0) * np.minimum(1, (bar - tt) / 4.0)
     for f in ch:
-        mus[s:s + d] += np.sin(2 * np.pi * f * tt) * env * 0.05
-    mus[s:s + d] += np.sin(2 * np.pi * (ch[0] / 2) * tt) * env * 0.06
-# suavizado tipo pasa-bajos (media móvil) para quitar brillo
-k = 24
+        mus[s0:s0+d] += np.sin(2*np.pi*f*tt + 0.6*np.sin(2*np.pi*0.12*tt)) * env * 0.045
+# destellos tipo campana (estrellas)
+rng = np.random.default_rng(7)
+for k in range(int(T / 3.5)):
+    s0 = int((k * 3.5 + rng.uniform(0, 2.0)) * SR)
+    if s0 >= n:
+        break
+    d = min(int(2.2 * SR), n - s0)
+    tt = np.arange(d) / SR
+    f = float(rng.choice([880.0, 1046.5, 1318.5, 1567.98]))
+    mus[s0:s0+d] += np.sin(2*np.pi*f*tt) * np.exp(-tt / 0.6) * 0.018
+k = 20
 mus = np.convolve(mus, np.ones(k, np.float32) / k, mode='same')
-mus *= 0.30
-fade = int(3.0 * SR)
+mus *= 0.34
+fade = int(3.5 * SR)
 mus[:fade] *= np.linspace(0, 1, fade)
 mus[-fade:] *= np.linspace(1, 0, fade)
 
