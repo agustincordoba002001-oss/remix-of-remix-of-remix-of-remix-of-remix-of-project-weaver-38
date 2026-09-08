@@ -17,7 +17,7 @@ def font(sz):
     return ImageFont.truetype(p, sz)
 
 
-F_TITLE, F_BIG, F_MED, F_QUOTE = font(74), font(56), font(36), font(42)
+F_TITLE, F_BIG, F_MED, F_QUOTE, F_TINY = font(74), font(56), font(36), font(42), font(16)
 RED = (200, 42, 46, 255)
 BLUE = (26, 88, 148, 255)
 GOLD = (206, 146, 36, 255)
@@ -183,7 +183,7 @@ for frame in range(N):
         hy = int(max(-180, min(H - 45, tip[1] - TIPY)))
         canvas.paste(hand, (hx, hy), hand)
     d = ImageDraw.Draw(canvas)
-    d.text((70, 686), 'CRONOS · CURIOSIDADES', font=font(16), fill=(150, 150, 150))
+    d.text((70, 686), 'CRONOS · CURIOSIDADES', font=F_TINY, fill=(150, 150, 150))
     if frame in STILLS:
         canvas.save(f'/tmp/cur/still-{frame}.png')
     proc.stdin.write(canvas.tobytes())
