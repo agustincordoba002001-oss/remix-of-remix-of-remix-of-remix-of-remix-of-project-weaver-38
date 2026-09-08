@@ -12,8 +12,9 @@ import numpy as np
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 from voces_space import sintetizar  # noqa: E402
+from mastering import masterizar  # noqa: E402
 
-SR = 22050
+SR = 48000
 TMP = '/tmp/luna'
 os.makedirs(TMP, exist_ok=True)
 os.makedirs('/tmp/voces_seg', exist_ok=True)
@@ -70,11 +71,14 @@ marks = []
 tcur = 0.35
 for i, (who, txt, gap) in enumerate(segs):
     voz = 'lilith' if who == 'D' else 'dark'
-    dst = f'/tmp/voces_seg/{i:02d}_{voz}.wav'
+    raw = f'/tmp/voces_seg/{i:02d}_{voz}.wav'
+    dst = f'/tmp/voces_seg/{i:02d}_{voz}_master.wav'
+    if not os.path.exists(raw):
+        sintetizar(txt, voz, raw)
     if not os.path.exists(dst):
-        sintetizar(txt, voz, dst)
+        masterizar(raw, dst, voz)
     a = recortar_silencio(leer_wav(dst))
-    a = a / max(1e-6, np.abs(a).max()) * (0.88 if who == 'D' else 0.82)
+    a = a / max(1e-6, np.abs(a).max()) * (0.90 if who == 'D' else 0.86)
     # pequeño respiro al final de cada frase para que no suene atropellada
     fade = int(0.05 * SR)
     a[:fade] *= np.linspace(0, 1, fade)
@@ -117,7 +121,7 @@ for k in range(int(T / 3.5)):
     mus[s0:s0 + d] += np.sin(2 * np.pi * f * tt) * np.exp(-tt / 0.6) * 0.018
 k = 20
 mus = np.convolve(mus, np.ones(k, np.float32) / k, mode='same')
-mus *= 0.30
+mus *= 0.22
 fade = int(3.5 * SR)
 mus[:fade] *= np.linspace(0, 1, fade)
 mus[-fade:] *= np.linspace(1, 0, fade)
