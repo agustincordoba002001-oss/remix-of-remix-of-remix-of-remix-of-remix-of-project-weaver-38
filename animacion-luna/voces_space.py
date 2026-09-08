@@ -26,13 +26,21 @@ VOCES = {
 }
 
 
-def sintetizar(texto: str, voz: str, destino: str, reintentos: int = 3) -> str:
-    """Genera un WAV con la voz indicada y lo guarda en `destino`."""
+def sintetizar(texto: str, voz: str, destino: str, reintentos: int = 3,
+               ajustes: dict | None = None) -> str:
+    """Genera un WAV con la voz indicada y lo guarda en `destino`.
+
+    `ajustes` permite variar levemente el ritmo o la expresividad de una frase
+    concreta, para que la narración no suene siempre igual.
+    """
     cfg = VOCES[voz]
+    settings = dict(cfg["settings"])
+    if ajustes:
+        settings.update(ajustes)
     cuerpo = json.dumps({
         "text": texto,
         "modelPath": cfg["modelPath"],
-        "settings": cfg["settings"],
+        "settings": settings,
     }).encode()
     ultimo = None
     for _ in range(reintentos):
