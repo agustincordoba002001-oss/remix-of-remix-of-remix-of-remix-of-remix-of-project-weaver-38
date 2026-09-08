@@ -24,16 +24,16 @@ PERFILES = {
         "alimiter=limit=0.89:level=disabled"
     ),
     "dark": (
-        "highpass=f=80,"
-        "anlmdn=s=0.0006:p=0.004:r=0.008,"
-        "equalizer=f=140:t=q:w=1.0:g=1.5,"
-        "equalizer=f=350:t=q:w=1.2:g=-2.0,"
-        "equalizer=f=2000:t=q:w=1.0:g=2.2,"
-        "equalizer=f=4000:t=q:w=1.1:g=2.4,"
-        "deesser=i=0.35:m=0.5:f=0.30,"
-        "aexciter=level_in=1:level_out=1:amount=1.2:drive=5:blend=0.6:freq=7000,"
-        "acompressor=threshold=-20dB:ratio=3.0:attack=10:release=200:makeup=2.4,"
-        "alimiter=limit=0.94"
+        "highpass=f=75,"
+        "anlmdn=s=0.0004:p=0.004:r=0.008,"
+        "equalizer=f=150:t=q:w=1.0:g=1.0,"       # pecho sin barro
+        "equalizer=f=360:t=q:w=1.2:g=-2.2,"      # quita el tono de cajón
+        "equalizer=f=2400:t=q:w=1.2:g=2.6,"      # dicción y consonantes
+        "equalizer=f=5000:t=q:w=1.4:g=1.2,"      # aire discreto
+        "lowpass=f=15000,"
+        "deesser=i=0.45:m=0.5:f=0.30,"
+        "acompressor=threshold=-20dB:ratio=2.2:attack=15:release=220:makeup=1.5,"
+        "alimiter=limit=0.89:level=disabled"
     ),
 }
 

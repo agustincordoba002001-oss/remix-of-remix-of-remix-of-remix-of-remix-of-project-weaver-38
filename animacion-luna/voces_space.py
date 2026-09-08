@@ -19,10 +19,11 @@ VOCES = {
         # noise_scale bajo = dicción limpia; el ritmo algo lento evita que se coma sílabas.
         "settings": {"speaker": 0, "noise_scale": 0.60, "length_scale": 1.14, "noise_w": 0.72},
     },
-    # Voz de las citas y frases graves: más lenta y sobria.
+    # Narrador principal: Dark. noise_scale bajo = dicción limpia, sin
+    # comerse sílabas; el ritmo se ajusta frase a frase desde el guion.
     "dark": {
         "modelPath": "models/es_MX-dark.onnx",
-        "settings": {"speaker": 0, "noise_scale": 0.65, "length_scale": 1.14, "noise_w": 0.78},
+        "settings": {"speaker": 0, "noise_scale": 0.58, "length_scale": 1.06, "noise_w": 0.70},
     },
 }
 
