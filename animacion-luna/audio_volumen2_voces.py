@@ -69,15 +69,44 @@ def recortar_silencio(a, umbral=0.012):
 parts = [np.zeros(int(0.35 * SR), np.float32)]
 marks = []
 tcur = 0.35
+DRAMATICAS = ('muertos', 'murieron', 'miedo', 'tragedia', 'incendio',
+              'pálidos', 'riesgoso', 'inalcanzable')
+AGILES = ('porque', 'ya le habían', 'la sala', 'todo arranca')
+
+
+def ritmo(txt: str, gap: float) -> float:
+    """Velocidad acorde a lo que se narra: los datos van ágiles y las frases
+    con carga emocional se dicen más despacio."""
+    t = txt.lower()
+    v = 1.02
+    if any(k in t for k in DRAMATICAS):
+        v += 0.09
+    if any(t.startswith(k) for k in AGILES):
+        v -= 0.03
+    if len(txt) > 140:            # frases largas: no arrastrarlas
+        v -= 0.03
+    v += min(gap, 0.65) * 0.08    # antes de una pausa larga, cerrar más calmo
+    return round(min(1.14, max(0.96, v)), 3)
+
+
+def nivelar(a, objetivo=0.10, techo=0.80):
+    """Deja todas las frases al mismo volumen percibido (RMS) sin saturar."""
+    activo = a[np.abs(a) > 0.01]
+    rms = float(np.sqrt(np.mean(activo ** 2))) if len(activo) else 1e-6
+    g = objetivo / max(1e-6, rms)
+    pico = float(np.abs(a).max()) or 1e-6
+    g = min(g, techo / pico)
+    return a * g
+
+
 for i, (who, txt, gap) in enumerate(segs):
     voz = 'elena' if who == 'D' else 'dark'
-    # Variación de expresividad frase a frase: las frases con pausa larga se
-    # dicen más despacio y con más melodía; las de pausa corta, más ágiles.
+    # Expresividad frase a frase, acorde al contenido de cada línea.
     if voz == 'elena':
         ajustes = {
-            'length_scale': round(1.10 + min(gap, 0.65) * 0.14, 3),
-            'noise_scale': round(0.58 + (i % 3) * 0.02, 3),
-            'noise_w': round(0.70 + (i % 2) * 0.03, 3),
+            'length_scale': ritmo(txt, gap),
+            'noise_scale': round(0.56 + (i % 3) * 0.015, 3),
+            'noise_w': round(0.68 + (i % 2) * 0.03, 3),
         }
     else:
         ajustes = None
@@ -88,7 +117,7 @@ for i, (who, txt, gap) in enumerate(segs):
     if not os.path.exists(dst):
         masterizar(raw, dst, voz)
     a = recortar_silencio(leer_wav(dst))
-    a = a / max(1e-6, np.abs(a).max()) * (0.90 if who == 'D' else 0.86)
+    a = nivelar(a, 0.105 if who == 'D' else 0.100)
     # pequeño respiro al final de cada frase para que no suene atropellada
     fade = int(0.05 * SR)
     a[:fade] *= np.linspace(0, 1, fade)
@@ -131,13 +160,27 @@ for k in range(int(T / 3.5)):
     mus[s0:s0 + d] += np.sin(2 * np.pi * f * tt) * np.exp(-tt / 0.6) * 0.018
 k = 20
 mus = np.convolve(mus, np.ones(k, np.float32) / k, mode='same')
-mus *= 0.22
+mus *= 0.16
 fade = int(3.5 * SR)
 mus[:fade] *= np.linspace(0, 1, fade)
 mus[-fade:] *= np.linspace(1, 0, fade)
 
+# La música se aparta cuando entra la voz (ducking suave), para que la
+# narración se escuche siempre clara y la mezcla no sature.
+env = np.zeros(n, np.float32)
+env[:len(voz)] = np.abs(voz[:n])
+w = int(0.25 * SR)
+env = np.convolve(env, np.ones(w, np.float32) / w, mode='same')
+duck = 1.0 - 0.62 * np.clip(env / 0.09, 0, 1)
+w2 = int(0.35 * SR)
+duck = np.convolve(duck, np.ones(w2, np.float32) / w2, mode='same')
+mus *= duck
+
 out = mus.copy()
 out[:len(voz)] += voz
+pico = float(np.abs(out).max())
+if pico > 0.89:
+    out *= 0.89 / pico
 out = np.clip(out, -1, 1)
 with wave.open(f'{TMP}/v2_2min.wav', 'wb') as w:
     w.setnchannels(1)
