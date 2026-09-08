@@ -119,7 +119,7 @@ for i, (who, txt, gap) in enumerate(segs):
     if not os.path.exists(dst):
         masterizar(raw, dst, voz)
     a = recortar_silencio(leer_wav(dst))
-    a = nivelar(a, 0.073 if who == 'D' else 0.070)
+    a = nivelar(a, 0.079 if who == 'D' else 0.076)
     # pequeño respiro al final de cada frase para que no suene atropellada
     fade = int(0.05 * SR)
     a[:fade] *= np.linspace(0, 1, fade)
