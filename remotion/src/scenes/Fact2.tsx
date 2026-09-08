@@ -34,6 +34,7 @@ const Marker: React.FC<{ label: string; year: string; x: number; delay: number }
           marginTop: 10,
           letterSpacing: 2,
           transform: "translateX(-8px)",
+          whiteSpace: "nowrap",
         }}
       >
         {year}
@@ -103,7 +104,7 @@ export const Fact2: React.FC = () => {
           />
           <Marker label="PIRÁMIDE" year="2560 a.C." x={0} delay={44} />
           <Marker label="CLEOPATRA" year="30 a.C." x={62} delay={64} />
-          <Marker label="APOLO 11" year="1969" x={96} delay={84} />
+          <Marker label="APOLO 11" year="1969" x={92} delay={84} />
         </div>
         <Reveal delay={100} duration={24} distance={28}>
           <Body
